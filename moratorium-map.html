@@ -13,7 +13,7 @@
   and embed it in the post with an iframe instead:
 
     <iframe src="https://mgboydcom.github.io/fost-beat/moratorium-map.html" title="Data centre moratorium map"
-            style="width:100%;height:620px;border:0" loading="lazy"></iframe>
+            style="width:100%;height:1100px;border:0" loading="lazy"></iframe>
 
   Data is read live from the Google Sheet on every page load (and every
   10 minutes while the page is open), so new rows appear automatically.
@@ -24,7 +24,7 @@
   (or fix a wrong guess), add "lat" and "lng" columns to the sheet and fill
   them in; those take priority over the lookup.
 -->
-<style>html, body { margin: 0; padding: 0; background: transparent;
+<style>html, body { height: 100%; margin: 0; padding: 0; background: transparent;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }</style>
 </head>
 <body>
@@ -36,6 +36,7 @@
       --fm-ink: #1d2433; --fm-muted: #5b6475; --fm-line: #dde1e8; --fm-bg: #ffffff;
       --fm-adopted: #c0392b; --fm-proposed: #e08a1e; --fm-extended: #7b3fa0;
       --fm-lifted: #2e8b57; --fm-rejected: #6b7280; --fm-other: #2563eb;
+      --fm-ban: #7f1d1d;
       font-family: inherit; color: var(--fm-ink); background: var(--fm-bg);
       border: 1px solid var(--fm-line); border-radius: 10px; overflow: hidden;
       max-width: 100%; box-sizing: border-box;
@@ -51,8 +52,9 @@
       font: inherit; font-size: .8rem; color: var(--fm-ink); line-height: 1.3; }
     #fost-mora .fm-chip[aria-pressed="false"] { opacity: .45; }
     #fost-mora .fm-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-    #fost-mora .fm-map { height: 480px; width: 100%; margin-top: 10px; z-index: 0; }
-    @media (max-width: 600px) { #fost-mora .fm-map { height: 380px; } }
+    /* The map fills the rest of the frame, so the iframe's height sets the map size. */
+    #fost-mora { display: flex; flex-direction: column; height: 100vh; min-height: 520px; }
+    #fost-mora .fm-map { flex: 1 1 auto; min-height: 300px; width: 100%; margin-top: 10px; z-index: 0; }
     #fost-mora .fm-foot { padding: 8px 16px; font-size: .75rem; color: var(--fm-muted);
       border-top: 1px solid var(--fm-line); }
     #fost-mora .fm-foot a { color: inherit; }
@@ -93,7 +95,7 @@
     var statusEl = root.querySelector('.fm-status');
     var filtersEl = root.querySelector('.fm-filters');
     var css = getComputedStyle(root);
-    var KNOWN = ['adopted', 'proposed', 'extended', 'lifted', 'rejected'];
+    var KNOWN = ['ban', 'adopted', 'proposed', 'extended', 'lifted', 'rejected'];
     function colorFor(type) {
       var key = KNOWN.indexOf(type) >= 0 ? type : 'other';
       return css.getPropertyValue('--fm-' + key).trim();
@@ -101,10 +103,18 @@
 
     var map = L.map(root.querySelector('.fm-map'), { scrollWheelZoom: false, worldCopyJump: true })
       .setView([30, 0], 2);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    var OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+    var tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 18, subdomains: 'abcd',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      attribution: OSM_ATTR + ' &copy; <a href="https://carto.com/attributions">CARTO</a>'
     }).addTo(map);
+    // If CARTO tiles won't load, fall back to the standard OpenStreetMap tiles.
+    var tileErrors = 0;
+    tiles.on('tileerror', function () {
+      if (++tileErrors !== 4) return;
+      map.removeLayer(tiles);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: OSM_ATTR }).addTo(map);
+    });
     map.on('focus', function () { map.scrollWheelZoom.enable(); });
     map.on('blur', function () { map.scrollWheelZoom.disable(); });
 
@@ -124,6 +134,13 @@
     var cache = {};
     try { cache = JSON.parse(localStorage.getItem(CACHE_KEY)) || {}; } catch (e) {}
     function saveCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch (e) {} }
+
+    // Coordinates looked up ahead of time by scripts/geocode.mjs. Only places
+    // added since its last run are looked up in the browser.
+    var prebuilt = fetch('geocache.json', { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .catch(function () { return {}; })
+      .then(function (pre) { for (var k in pre) cache[k] = pre[k]; });
 
     var queue = Promise.resolve();
     function nominatim(params) {
@@ -147,6 +164,7 @@
       var place = (row.jurisdiction || '').trim();
       var national = !place || row.level === 'national' || row.level === 'country' ||
         place.toLowerCase() === country.toLowerCase();
+      // Must match placeKey() in scripts/geocode.mjs.
       var key = (national ? '' : place + '|') + country;
       if (cache[key]) return Promise.resolve(cache[key]);
 
@@ -223,6 +241,12 @@
       return shown;
     }
 
+    var renderTimer = null;
+    function scheduleRender() {
+      if (renderTimer) return;
+      renderTimer = setTimeout(function () { renderTimer = null; render(); }, 250);
+    }
+
     function renderFilters(rows) {
       var counts = {};
       rows.forEach(function (r) { counts[r.action_type] = (counts[r.action_type] || 0) + 1; });
@@ -246,7 +270,8 @@
     });
 
     function refresh() {
-      return loadSheet().then(function (rows) {
+      return Promise.all([loadSheet(), prebuilt]).then(function (res) {
+        var rows = res[0];
         renderFilters(rows);
         var byKey = {};
         var next = [];
@@ -264,16 +289,15 @@
               missing++;
             }
             places = next;
+            if (--pending > 0) { scheduleRender(); return; }
             render();
-            if (--pending === 0) {
-              if (firstFit && layer.getLayers().length) {
-                map.fitBounds(layer.getBounds(), { padding: [30, 30], maxZoom: 6 });
-                firstFit = false;
-              }
-              statusEl.textContent = rows.length + ' entr' + (rows.length === 1 ? 'y' : 'ies') +
-                (missing ? ' (' + missing + ' could not be placed)' : '') +
-                ' · updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (firstFit && layer.getLayers().length) {
+              map.fitBounds(layer.getBounds(), { padding: [30, 30], maxZoom: 6 });
+              firstFit = false;
             }
+            statusEl.textContent = rows.length + ' entr' + (rows.length === 1 ? 'y' : 'ies') +
+              (missing ? ' (' + missing + ' could not be placed)' : '') +
+              ' · updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           });
         });
       }).catch(function (err) {
