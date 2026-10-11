@@ -55,6 +55,8 @@
     /* The map fills the rest of the frame, so the iframe's height sets the map size. */
     #fost-mora { display: flex; flex-direction: column; height: 100vh; min-height: 520px; }
     #fost-mora .fm-map { flex: 1 1 auto; min-height: 300px; width: 100%; margin-top: 10px; z-index: 0; }
+    /* Mute the basemap so the coloured markers stand out. */
+    #fost-mora .leaflet-tile-pane { filter: grayscale(1) brightness(1.04) contrast(.88); }
     #fost-mora .fm-foot { padding: 8px 16px; font-size: .75rem; color: var(--fm-muted);
       border-top: 1px solid var(--fm-line); }
     #fost-mora .fm-foot a { color: inherit; }
@@ -103,18 +105,11 @@
 
     var map = L.map(root.querySelector('.fm-map'), { scrollWheelZoom: false, worldCopyJump: true })
       .setView([30, 0], 2);
-    var OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
-    var tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 18, subdomains: 'abcd',
-      attribution: OSM_ATTR + ' &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    // Standard OpenStreetMap tiles: free and keyless (CARTO's basemaps now need an API key).
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
-    // If CARTO tiles won't load, fall back to the standard OpenStreetMap tiles.
-    var tileErrors = 0;
-    tiles.on('tileerror', function () {
-      if (++tileErrors !== 4) return;
-      map.removeLayer(tiles);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: OSM_ATTR }).addTo(map);
-    });
     map.on('focus', function () { map.scrollWheelZoom.enable(); });
     map.on('blur', function () { map.scrollWheelZoom.disable(); });
 
