@@ -1,14 +1,14 @@
 name: Update map locations
 
 # Looks up coordinates for any new places in the moratorium tracker sheet and
-# commits them to geocache.json, so visitors' browsers don't have to.
+# commits them to moratorium-tracker/geocache.json, so visitors' browsers don't have to.
 on:
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [scripts/geocode.mjs]
+    paths: [moratorium-tracker/scripts/geocode.mjs]
 
 permissions:
   contents: write
@@ -26,15 +26,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/geocode.mjs
+      - run: node moratorium-tracker/scripts/geocode.mjs
       - name: Commit new locations
         run: |
-          if git diff --quiet -- geocache.json; then
+          if git diff --quiet -- moratorium-tracker/geocache.json; then
             echo "No new locations."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add geocache.json
+          git add moratorium-tracker/geocache.json
           git commit -m "Update map locations"
           git push
