@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { runScore, runResearchStep } from '../prediction-engine.mjs';
+import { runScore, runResearchStep, checkSpreadsheet } from '../prediction-engine.mjs';
 import { evidenceTab, actorsTab } from '../lib/sheets.mjs';
 import { SUBMIT_TOOL } from '../lib/research.mjs';
 
@@ -100,4 +100,15 @@ test('CLI fails with a clear message when configuration is missing', async () =>
   const sa = JSON.stringify({ client_email: 'a', private_key: 'b' });
   await assert.rejects(run('node', [script, 'research'], { env: { ...env, PREDICTION_SPREADSHEET_ID: 'x', GOOGLE_SERVICE_ACCOUNT_JSON: sa } }), e => e.stderr.includes('PREDICTION_MODEL is not set'));
   await assert.rejects(run('node', [script, 'nonsense'], { env }), e => e.stderr.includes('usage'));
+});
+
+test('spreadsheet check reports tabs, or what to fix', async () => {
+  const lines = [];
+  assert.deepEqual(await checkSpreadsheet({ listTabs: async () => ['How to use'] }, l => lines.push(l)), ['How to use']);
+  assert.deepEqual(lines, ['Spreadsheet OK: 1 tab(s)']);
+  const failing = status => ({ listTabs: async () => { throw new Error(`Sheets API GET ?fields: HTTP ${status} {"error":"x"}`); } });
+  await assert.rejects(checkSpreadsheet(failing(403), quiet), /not enabled .* or the spreadsheet is not shared/);
+  await assert.rejects(checkSpreadsheet(failing(404), quiet), /No spreadsheet with that id/);
+  await assert.rejects(checkSpreadsheet({ listTabs: async () => { throw new Error('Google auth failed: HTTP 400 invalid_grant'); } }, quiet), /key in GOOGLE_SERVICE_ACCOUNT_JSON was not accepted/);
+  await assert.rejects(checkSpreadsheet(failing(400), quiet), /PREDICTION_SPREADSHEET_ID is the id/);
 });
