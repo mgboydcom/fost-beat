@@ -18,3 +18,16 @@ Live at: https://mgboydcom.github.io/fost-beat/blog-blocks/
 
 `moratorium-map.html` at the top level only redirects to
 `moratorium-tracker/moratorium-map.html`, so iframes that use the old address keep working.
+
+## OpenSpec
+
+The repo uses [OpenSpec](https://github.com/Fission-AI/OpenSpec) for spec-driven changes.
+Specs live in `openspec/`, and the agent skills in `.agents/skills/` (linked from
+`.claude/skills/`). In Claude Code, use `/openspec-explore`, `/openspec-propose`,
+`/openspec-apply-change`, `/openspec-sync-specs` and `/openspec-archive-change`.
+
+The skills call the `openspec` CLI, so cloud environments need it in their setup script:
+
+```bash
+npm install -g @fission-ai/openspec
+```
