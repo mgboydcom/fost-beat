@@ -59,3 +59,7 @@ test('bodyText handles odd values', () => {
   assert.equal(bodyText(42), '');
   assert.equal(bodyText('# Heading\n\nText'), '# Heading\n\nText');
 });
+
+test('HTML entities are decoded', () => {
+  assert.equal(bodyText('<p>I&#8217;m here &amp; there&nbsp;&hellip; &#x2014; &bogus;</p>'), 'I’m here & there … — &bogus;');
+});

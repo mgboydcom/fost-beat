@@ -35,6 +35,29 @@ async function loadTrackers(dir, only, log) {
   return { trackers: only ? trackers.filter(t => t.slug === only) : trackers, invalid };
 }
 
+// Opens the spreadsheet before doing anything else, so every run (even one
+// with no active trackers) proves the Google setup works. Turns the common
+// HTTP errors into a message saying what to fix.
+export async function checkSpreadsheet(sheets, log = console.log) {
+  let tabs;
+  try {
+    tabs = await sheets.listTabs();
+  } catch (err) {
+    const m = /HTTP (\d{3})/.exec(err.message);
+    const hint = err.message.startsWith('Google auth failed')
+      ? 'The service account key in GOOGLE_SERVICE_ACCOUNT_JSON was not accepted. Check the secret holds the whole JSON key file, or create a new key.'
+      : {
+      400: 'Check that PREDICTION_SPREADSHEET_ID is the id from the spreadsheet URL.',
+      401: 'The service account key in GOOGLE_SERVICE_ACCOUNT_JSON was not accepted. Create a new key and update the secret.',
+      403: 'The Google Sheets API is not enabled in the service account\'s Cloud project, or the spreadsheet is not shared with the service account.',
+      404: 'No spreadsheet with that id. Check PREDICTION_SPREADSHEET_ID.',
+    }[m && m[1]];
+    throw new Error(`cannot open the trackers spreadsheet: ${err.message}${hint ? `\n  ${hint}` : ''}`);
+  }
+  log(`Spreadsheet OK: ${tabs.length} tab(s)`);
+  return tabs;
+}
+
 export async function runScore({ sheets, dir = TRACKERS_DIR, only, today = todayISO(), log = console.log }) {
   const { trackers } = await loadTrackers(dir, only, log);
   const summary = [];
@@ -108,9 +131,10 @@ function parseArgs(argv) {
 async function main() {
   const { command, only } = parseArgs(process.argv.slice(2));
   const sheets = clientFromEnv();
+  const model = command === 'score' ? null : modelFromEnv();
+  await checkSpreadsheet(sheets);
   let failed = false;
   if (command === 'research' || command === 'all') {
-    const model = modelFromEnv();
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
     const ai = new Anthropic();
     console.log('Research');

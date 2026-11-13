@@ -34,10 +34,22 @@ export function buildQuery(cfg, page) {
   return `${cfg.url}/api/${cfg.collection}?${p}`;
 }
 
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', hellip: '…', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', ndash: '–', mdash: '—' };
+
+export function decodeEntities(text) {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => {
+    if (e[0] === '#') {
+      const code = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+      return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : m;
+    }
+    return ENTITIES[e.toLowerCase()] ?? m;
+  });
+}
+
 // Plain text from a string (HTML or Markdown) or Strapi v5 "blocks" JSON.
 export function bodyText(value) {
   if (value == null) return '';
-  if (typeof value === 'string') return value.replace(/<[^>]+>/g, ' ').replace(/[ \t]+/g, ' ').trim();
+  if (typeof value === 'string') return decodeEntities(value.replace(/<[^>]+>/g, ' ')).replace(/[ \t]+/g, ' ').trim();
   if (Array.isArray(value)) return value.map(bodyText).filter(Boolean).join('\n').trim();
   if (typeof value === 'object') {
     if (typeof value.text === 'string') return value.text;
