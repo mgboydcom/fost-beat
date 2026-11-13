@@ -1,0 +1,61 @@
+name: Prediction trackers engine
+
+# Weekly: researches every active tracker (new evidence goes into the trackers
+# spreadsheet as "proposed"), then scores. Daily: scores only, so evidence an
+# editor approves shows on the tracker page within a day.
+on:
+  schedule:
+    - cron: '23 5 * * 1'   # Mondays: research + score
+    - cron: '41 4 * * *'   # every day: score
+  workflow_dispatch:
+    inputs:
+      command:
+        description: What to run
+        type: choice
+        options: [score, research, all]
+        default: score
+      slug:
+        description: Only this tracker (optional)
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prediction-engine
+  cancel-in-progress: false
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PREDICTION_SPREADSHEET_ID: ${{ vars.PREDICTION_SPREADSHEET_ID }}
+      PREDICTION_MODEL: ${{ vars.PREDICTION_MODEL }}
+      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run engine
+        env:
+          COMMAND: ${{ github.event_name == 'workflow_dispatch' && inputs.command || (github.event.schedule == '23 5 * * 1' && 'all' || 'score') }}
+          SLUG: ${{ inputs.slug }}
+        run: node scripts/prediction-engine.mjs "$COMMAND" ${SLUG:+--slug "$SLUG"}
+      - name: Commit tracker data
+        if: ${{ !cancelled() }}
+        run: |
+          git add trackers/*/data.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No tracker data changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update prediction tracker data"
+          git pull --rebase
+          git push

@@ -1,0 +1,7 @@
+{
+  "data": [
+    { "id": 13, "attributes": { "title": "Second idea", "content": "Body two", "publishedAt": "2026-11-01T00:00:00.000Z", "updatedAt": "2026-11-01T00:00:00.000Z",
+      "tags": { "data": [ { "id": 3, "attributes": { "name": "prediction-idea" } } ] } } }
+  ],
+  "meta": { "pagination": { "page": 2, "pageSize": 100, "pageCount": 2, "total": 3 } }
+}

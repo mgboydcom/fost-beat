@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOSTBeat prediction tracker</title>
+<!--
+  FOSTBeat prediction tracker embed. Shows one tracker, chosen with ?t=<slug>,
+  from trackers/<slug>/data.json (written by scripts/prediction-engine.mjs).
+
+  Embed in a post with an iframe (the blog does not run <script> tags in posts):
+    <iframe src="https://mgboydcom.github.io/fost-beat/prediction.html?t=<slug>"
+            title="Prediction tracker" style="width:100%;height:1200px;border:0" loading="lazy"></iframe>
+-->
+<style>
+  :root {
+    --ink: #1d2433; --muted: #5b6475; --line: #dde1e8; --bg: #ffffff; --panel: #f6f7f9;
+    --accent: #2563eb; --yes: #2e7d4f; --no: #b3261e; --grid: #e9ecf1;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e6e9ef; --muted: #a2aab8; --line: #343b48; --bg: #161a21; --panel: #1e232c;
+      --accent: #7aa7ff; --yes: #5cc28a; --no: #f0857d; --grid: #2a303b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e6e9ef; --muted: #a2aab8; --line: #343b48; --bg: #161a21; --panel: #1e232c;
+    --accent: #7aa7ff; --yes: #5cc28a; --no: #f0857d; --grid: #2a303b;
+    color-scheme: dark;
+  }
+  html, body { margin: 0; background: var(--bg); }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); line-height: 1.45; }
+  *, *::before, *::after { box-sizing: border-box; }
+  .pt { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg); }
+  .pt-head { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .pt-title { margin: 0; font-size: 1.05rem; font-weight: 700; }
+  .pt-status { font-size: .8rem; color: var(--muted); }
+  .pt-body { padding: 16px; display: grid; gap: 20px; }
+  .pt-question { margin: 0; font-size: 1.15rem; font-weight: 600; }
+  .pt-sub { margin: 4px 0 0; font-size: .85rem; color: var(--muted); }
+  .pt-prob { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+  .pt-big { font-size: 2.6rem; font-weight: 750; line-height: 1; font-variant-numeric: tabular-nums; }
+  .pt-big small { font-size: .9rem; font-weight: 500; color: var(--muted); margin-left: 6px; }
+  .pt-bar { flex: 1 1 200px; height: 10px; border-radius: 999px; background: var(--grid); overflow: hidden; min-width: 0; }
+  .pt-bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+  .pt-note { font-size: .85rem; padding: 10px 12px; border-radius: 8px; background: var(--panel); border-left: 4px solid var(--accent); }
+  .pt-note.yes { border-left-color: var(--yes); } .pt-note.no { border-left-color: var(--no); }
+  h4 { margin: 0 0 8px; font-size: .95rem; }
+  .pt-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .pt-chart text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+  .pt-chart .grid { stroke: var(--grid); stroke-width: 1; }
+  .pt-chart .line { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .pt-chart .dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+  details { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+  details summary { cursor: pointer; font-weight: 600; font-size: .9rem; }
+  dl.pt-res { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 10px 0 2px; font-size: .85rem; }
+  dl.pt-res dt { color: var(--muted); } dl.pt-res dd { margin: 0; }
+  .pt-table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: .78rem; }
+  .pt-ev { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .pt-ev li { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: .88rem; overflow-wrap: anywhere; }
+  .pt-ev .meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .78rem; color: var(--muted); margin-bottom: 4px; }
+  .pt-tag { display: inline-block; padding: 0 8px; border-radius: 999px; font-weight: 600; font-size: .74rem; border: 1px solid currentColor; }
+  .pt-tag.yes { color: var(--yes); } .pt-tag.no { color: var(--no); }
+  .pt-ev a, .pt-foot a, .pt-res a { color: var(--accent); }
+  .pt-empty { color: var(--muted); font-size: .85rem; margin: 0; }
+  .pt-foot { padding: 10px 16px; font-size: .75rem; color: var(--muted); border-top: 1px solid var(--line); }
+  .pt-foot p { margin: 0 0 4px; }
+  .pt-msg { padding: 32px 16px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="pt" id="pt">
+  <div class="pt-head">
+    <h3 class="pt-title">Prediction tracker</h3>
+    <span class="pt-status" aria-live="polite">Loading…</span>
+  </div>
+  <div id="pt-main"><p class="pt-msg">Loading tracker…</p></div>
+  <div class="pt-foot">
+    <p><strong>How this works:</strong> the probability starts from a base rate and moves with each piece of evidence an editor has approved.
+      Each item adds or subtracts a fixed weight for its type of event, scaled by how influential the actor is. Proposed items that have not been
+      reviewed are not counted.</p>
+    <p>Source: <a href="https://beat.joinfost.io" target="_blank" rel="noopener">FOSTBeat</a></p>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var main = document.getElementById('pt-main');
+  var statusEl = document.querySelector('.pt-status');
+  var titleEl = document.querySelector('.pt-title');
+  var STANCE = { '-2': 'Strongly against', '-1': 'Against', '0': 'Neutral', '1': 'For', '2': 'Strongly for' };
+
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === 'text') e.textContent = attrs[k];
+      else if (k === 'class') e.className = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function safeUrl(u) {
+    try { var x = new URL(u); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : null; } catch (e) { return null; }
+  }
+  function host(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } }
+  function pct(p) { var v = p * 100; return (v >= 10 || v === 0 ? Math.round(v) : Math.round(v * 10) / 10) + '%'; }
+  function fmtDate(d) {
+    if (!d) return '';
+    var t = new Date(d + 'T00:00:00Z');
+    return isNaN(t) ? d : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  }
+  function message(text) { main.textContent = ''; main.appendChild(el('p', { class: 'pt-msg', text: text })); }
+
+  var NS = 'http://www.w3.org/2000/svg';
+  function svg(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    return e;
+  }
+
+  // Step chart of probability over time: the value holds until the next change.
+  // Drawn at the container's real width so the labels stay readable on phones.
+  function chart(history, endDate, width) {
+    var W = Math.max(260, Math.round(width || 640)), H = W < 480 ? 180 : 220, L = 40, R = 12, T = 10, B = 26;
+    var pts = history.map(function (h) { return { t: Date.parse(h.date + 'T00:00:00Z'), p: h.p, date: h.date }; })
+      .filter(function (x) { return !isNaN(x.t); });
+    var root = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img' });
+    var label = 'Probability over time: ' + pts.map(function (x) { return fmtDate(x.date) + ' ' + pct(x.p); }).join(', ');
+    root.appendChild(Object.assign(svg('title'), { textContent: label }));
+    if (!pts.length) return root;
+    var t0 = pts[0].t;
+    var tEnd = Math.max(pts[pts.length - 1].t, Date.parse((endDate || pts[pts.length - 1].date) + 'T00:00:00Z') || 0);
+    if (tEnd <= t0) tEnd = t0 + 86400000;
+    var x = function (t) { return L + (t - t0) / (tEnd - t0) * (W - L - R); };
+    var y = function (p) { return T + (1 - p) * (H - T - B); };
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (g) {
+      root.appendChild(svg('line', { x1: L, x2: W - R, y1: y(g), y2: y(g), class: 'grid' }));
+      var tx = svg('text', { x: L - 6, y: y(g) + 4, 'text-anchor': 'end' }); tx.textContent = Math.round(g * 100) + '%'; root.appendChild(tx);
+    });
+    var d = 'M' + x(pts[0].t) + ' ' + y(pts[0].p);
+    for (var i = 1; i < pts.length; i++) d += ' H' + x(pts[i].t) + ' V' + y(pts[i].p);
+    d += ' H' + x(tEnd);
+    root.appendChild(svg('path', { d: d, class: 'line' }));
+    pts.forEach(function (pt) { root.appendChild(svg('circle', { cx: x(pt.t), cy: y(pt.p), r: 4, class: 'dot' })); });
+    var a = svg('text', { x: L, y: H - 6 }); a.textContent = fmtDate(pts[0].date); root.appendChild(a);
+    var endIso = new Date(tEnd).toISOString().slice(0, 10);
+    if (endIso !== pts[0].date) {
+      var b = svg('text', { x: W - R, y: H - 6, 'text-anchor': 'end' }); b.textContent = fmtDate(endIso); root.appendChild(b);
+    }
+    return root;
+  }
+
+  function render(data) {
+    document.title = data.title + ' · FOSTBeat prediction';
+    titleEl.textContent = data.title;
+    var resolved = data.status === 'resolved-yes' || data.status === 'resolved-no';
+    statusEl.textContent = resolved ? 'Resolved ' + fmtDate(data.outcome && data.outcome.date) : 'Updated ' + fmtDate(data.updated);
+
+    var body = el('div', { class: 'pt-body' });
+    body.appendChild(el('div', null, [
+      el('p', { class: 'pt-question', text: data.question }),
+      el('p', { class: 'pt-sub', text: 'Deadline: ' + fmtDate(data.deadline) }),
+    ]));
+
+    if (resolved) {
+      var yes = data.status === 'resolved-yes';
+      var src = data.outcome && safeUrl(data.outcome.source);
+      body.appendChild(el('div', { class: 'pt-note ' + (yes ? 'yes' : 'no') }, [
+        el('strong', { text: 'Resolved: ' + (yes ? 'YES' : 'NO') }), ' on ' + fmtDate(data.outcome.date) + '. ',
+        src ? el('a', { href: src, target: '_blank', rel: 'noopener', text: 'Source' }) : null,
+        data.outcome.note ? el('span', { text: ' ' + data.outcome.note }) : null,
+      ]));
+    } else {
+      body.appendChild(el('div', { class: 'pt-prob' }, [
+        el('div', { class: 'pt-big' }, [pct(data.probability), el('small', { text: 'chance of YES' })]),
+        el('div', { class: 'pt-bar', role: 'presentation' }, [el('span', { style: 'width:' + (data.probability * 100) + '%' })]),
+      ]));
+      if (data.awaiting_resolution) {
+        body.appendChild(el('div', { class: 'pt-note', text: 'The deadline has passed. This tracker is waiting for an editor to confirm the outcome.' }));
+      }
+    }
+
+    body.appendChild(el('details', null, [
+      el('summary', { text: 'How this question is decided' }),
+      el('dl', { class: 'pt-res' }, [
+        el('dt', { text: 'YES if' }), el('dd', { text: data.resolution.yes }),
+        el('dt', { text: 'NO if' }), el('dd', { text: data.resolution.no }),
+        el('dt', { text: 'Decided by' }), el('dd', { text: data.resolution.source }),
+        el('dt', { text: 'Starting point' }), el('dd', { text: pct(data.base_rate.p) + ' — ' + data.base_rate.reasoning }),
+      ]),
+    ]));
+
+    var chartBox = el('div');
+    body.appendChild(el('section', { class: 'pt-chart' }, [el('h4', { text: 'Probability over time' }), chartBox]));
+
+    var actors = data.actors || [];
+    var actorSection = el('section', null, [el('h4', { text: 'Key actors' })]);
+    if (actors.length) {
+      var rows = actors.slice().sort(function (a, b) { return (b.influence || 0) - (a.influence || 0); }).map(function (a) {
+        return el('tr', null, [
+          el('td', { text: a.name }), el('td', { text: a.role || '' }),
+          el('td', { text: STANCE[String(a.stance)] || '' }), el('td', { text: a.influence ? a.influence + ' / 5' : '' }),
+        ]);
+      });
+      actorSection.appendChild(el('div', { class: 'pt-table-wrap' }, [el('table', null, [
+        el('thead', null, [el('tr', null, [el('th', { text: 'Actor' }), el('th', { text: 'Role' }), el('th', { text: 'Stance on YES' }), el('th', { text: 'Influence' })])]),
+        el('tbody', null, rows),
+      ])]));
+    } else actorSection.appendChild(el('p', { class: 'pt-empty', text: 'No actors listed yet.' }));
+    body.appendChild(actorSection);
+
+    var evidence = data.evidence || [];
+    var evSection = el('section', null, [el('h4', { text: 'Evidence (' + evidence.length + ')' })]);
+    if (evidence.length) {
+      evSection.appendChild(el('ul', { class: 'pt-ev' }, evidence.map(function (e) {
+        var url = safeUrl(e.source_url);
+        return el('li', null, [
+          el('div', { class: 'meta' }, [
+            el('span', { text: fmtDate(e.date) }),
+            el('span', { text: e.signal_label || e.signal_type }),
+            el('span', { class: 'pt-tag ' + (e.direction === 'yes' ? 'yes' : 'no'), text: e.direction === 'yes' ? 'Towards YES' : 'Towards NO' }),
+            e.actor ? el('span', { text: e.actor }) : null,
+          ]),
+          el('div', { text: e.summary }),
+          url ? el('a', { href: url, target: '_blank', rel: 'noopener', text: host(url) }) : null,
+        ]);
+      })));
+    } else evSection.appendChild(el('p', { class: 'pt-empty', text: 'No reviewed evidence yet.' }));
+    body.appendChild(evSection);
+
+    main.textContent = '';
+    main.appendChild(body);
+
+    var lastWidth = 0;
+    function drawChart() {
+      var w = chartBox.clientWidth;
+      if (!w || w === lastWidth) return;
+      lastWidth = w;
+      chartBox.textContent = '';
+      chartBox.appendChild(chart(data.history || [], resolved ? null : data.updated, w));
+    }
+    drawChart();
+    window.addEventListener('resize', drawChart);
+  }
+
+  var slug = new URLSearchParams(location.search).get('t') || '';
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
+    statusEl.textContent = '';
+    message(slug ? 'Tracker not found.' : 'No tracker chosen. Add ?t=<tracker> to the address.');
+    return;
+  }
+  fetch('trackers/' + slug + '/data.json', { cache: 'no-cache' })
+    .then(function (r) {
+      if (r.status === 404) throw Object.assign(new Error('Tracker not found.'), { shown: true });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(render)
+    .catch(function (err) {
+      statusEl.textContent = '';
+      message(err.shown ? err.message : 'This tracker could not be loaded. Please try again later.');
+    });
+})();
+</script>
+</body>
+</html>

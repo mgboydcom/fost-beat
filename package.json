@@ -1,0 +1,12 @@
+{
+  "name": "fost-beat",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test 'scripts/test/*.test.mjs'"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0"
+  }
+}

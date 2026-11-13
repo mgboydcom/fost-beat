@@ -1,0 +1,9 @@
+{
+  "data": [
+    { "id": 11, "attributes": { "title": "1033 into law by end of 2027", "content": "<p>Will Section 1033 become <b>law</b>?</p>", "publishedAt": null, "updatedAt": "2026-11-10T09:00:00.000Z",
+      "tags": { "data": [ { "id": 3, "attributes": { "name": "Prediction-Idea" } }, { "id": 4, "attributes": { "name": "open-finance" } } ] } } },
+    { "id": 12, "attributes": { "title": "Untagged", "content": "x", "publishedAt": null, "updatedAt": "2026-11-10T09:00:00.000Z",
+      "tags": { "data": [ { "id": 4, "attributes": { "name": "open-finance" } } ] } } }
+  ],
+  "meta": { "pagination": { "page": 1, "pageSize": 100, "pageCount": 2, "total": 3 } }
+}
