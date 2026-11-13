@@ -1,0 +1,78 @@
+{
+  "collectionName": "components_blog_office_hourss",
+  "info": {
+    "displayName": "Office Hours",
+    "icon": "calendar",
+    "description": "Weekly open office hours invite with Join and Add to calendar"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Open office hours"
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "default": "Bring your questions to the FOSTBeat team"
+    },
+    "description": {
+      "type": "text",
+      "default": "Every Friday at 16:00 CET we open a drop-in call to talk through this week's articles, your API and AI questions, or ideas for a story."
+    },
+    "dayOfWeek": {
+      "type": "enumeration",
+      "enum": [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday"
+      ],
+      "default": "friday",
+      "required": true
+    },
+    "startTime": {
+      "type": "time",
+      "default": "16:00:00.000",
+      "required": true
+    },
+    "durationMinutes": {
+      "type": "integer",
+      "default": 60,
+      "min": 15,
+      "required": true
+    },
+    "timezone": {
+      "type": "string",
+      "default": "Europe/Paris",
+      "required": true
+    },
+    "timezoneLabel": {
+      "type": "string",
+      "default": "CET"
+    },
+    "firstSessionDate": {
+      "type": "date",
+      "required": true
+    },
+    "joinUrl": {
+      "type": "string",
+      "required": true
+    },
+    "platformLabel": {
+      "type": "string",
+      "default": "Zoom"
+    },
+    "calendarTitle": {
+      "type": "string",
+      "default": "FOSTBeat Open Office Hours"
+    },
+    "joinLabel": {
+      "type": "string",
+      "default": "Join on Zoom"
+    }
+  }
+}

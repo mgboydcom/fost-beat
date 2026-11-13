@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_blog_speakers",
+  "info": {
+    "displayName": "Speaker",
+    "icon": "user",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "role": {
+      "type": "string"
+    },
+    "photo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "linkedinUrl": {
+      "type": "string"
+    }
+  }
+}

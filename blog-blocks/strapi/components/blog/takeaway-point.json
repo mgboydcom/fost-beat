@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_blog_takeaway_points",
+  "info": {
+    "displayName": "Takeaway Point",
+    "icon": "check",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

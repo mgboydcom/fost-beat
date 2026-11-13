@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FOSTBeat Block Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f7f4f2; --surface:#fff; --fg:#111525; --muted:#5a5a5a; --line:#e8e0db; --field:#fff;
+  --accent:#e2500f; --accent-ink:#fff; --warn-bg:#fff4e5; --warn-fg:#7a3d00; --err:#b42318;
+  --code-bg:#111525; --code-fg:#e4e8f1;
+  --f-body:"Inter",ui-sans-serif,system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b0f1c; --surface:#151a2c; --fg:#eceef4; --muted:#a3a8b8; --line:#262d44; --field:#0f1324;
+  --accent:#ff7a33; --accent-ink:#140800; --warn-bg:#2a1d0c; --warn-fg:#ffcf99; --err:#ff8a7a;
+  --code-bg:#070a14; --code-fg:#dfe4ee; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b0f1c; --surface:#151a2c; --fg:#eceef4; --muted:#a3a8b8; --line:#262d44; --field:#0f1324;
+  --accent:#ff7a33; --accent-ink:#140800; --warn-bg:#2a1d0c; --warn-fg:#ffcf99; --err:#ff8a7a;
+  --code-bg:#070a14; --code-fg:#dfe4ee; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1320px;margin:0 auto;padding:28px 16px 64px}
+header h1{margin:0 0 6px;font-size:clamp(1.6rem,3.6vw,2.2rem);letter-spacing:-.02em;line-height:1.1}
+header h1 span{color:var(--accent)}
+header p{margin:0;color:var(--muted);max-width:72ch}
+nav.picker{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 18px}
+nav.picker button{font:inherit;font-size:14px;font-weight:500;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+nav.picker button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+nav.picker button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.panel h2{margin:0 0 4px;font-size:1.2rem}
+.panel .blurb{margin:0 0 14px;color:var(--muted);font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.btn{font:inherit;font-size:14px;font-weight:600;border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;gap:6px}
+.btn.ghost{background:var(--surface);color:var(--fg);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn.small{font-size:13px;padding:5px 10px;font-weight:500}
+.btn.danger{color:var(--err)}
+label.f{display:block;margin-bottom:12px}
+label.f > span{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+label.f > span em{color:var(--accent);font-style:normal}
+label.f small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+input,textarea,select{width:100%;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--fg)}
+textarea{min-height:68px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.img-row{display:flex;gap:8px;align-items:center}
+.img-row img{width:40px;height:40px;object-fit:cover;border-radius:6px;background:var(--line);flex:none}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:12px 12px 4px;margin:0 0 14px}
+legend{font-size:13px;font-weight:700;padding:0 6px}
+.item{border-top:1px dashed var(--line);padding-top:10px;margin-top:4px}
+.item:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.item-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.item-head div{display:flex;gap:4px}
+.add{margin:2px 0 12px}
+.msg{border-radius:8px;padding:10px 12px;font-size:13px;margin:0 0 12px;background:var(--warn-bg);color:var(--warn-fg)}
+.msg ul{margin:4px 0 0;padding-left:18px}
+.preview-col{position:sticky;top:12px;min-width:0}
+@media (max-width:900px){.preview-col{position:static}}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:13px;border:0;background:transparent;color:var(--muted);padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.frame-box{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-inline:auto;transition:max-width .2s;max-width:100%}
+.frame-box.phone{max-width:375px}
+iframe{display:block;width:100%;border:0;height:420px;background:#fff4ee}
+.opts{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin:12px 0 8px;font-size:13px;color:var(--muted)}
+.opts label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.opts input{width:auto}
+details.code summary{cursor:pointer;font-size:13px;color:var(--muted);margin:6px 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);font-family:var(--f-mono);font-size:12px;line-height:1.55;padding:14px;border-radius:10px;overflow:auto;max-height:340px;white-space:pre-wrap;word-break:break-all}
+dialog{width:min(640px,calc(100vw - 32px));border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);padding:18px}
+dialog::backdrop{background:rgba(11,15,28,.55)}
+dialog h3{margin:0 0 6px}
+dialog p{margin:0 0 10px;color:var(--muted);font-size:14px}
+dialog textarea{min-height:200px;font-family:var(--f-mono);font-size:12px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:14px;font-weight:500;padding:10px 18px;border-radius:999px;z-index:60}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>FOSTBeat <span>block generator</span></h1>
+    <p>Pick a block, fill in the fields, then copy the HTML and paste it into the article body in Strapi. Each snippet carries its own scoped styles and works in light and dark mode.</p>
+  </header>
+
+  <nav class="picker" id="picker" aria-label="Block type"></nav>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="form-title">
+      <h2 id="form-title"></h2>
+      <p class="blurb" id="form-blurb"></p>
+      <div class="row">
+        <button class="btn ghost small" type="button" id="load-example">Load example</button>
+        <button class="btn ghost small" type="button" id="reset">Clear</button>
+        <button class="btn ghost small" type="button" id="open-import">Edit a pasted block</button>
+      </div>
+      <form id="form" autocomplete="off" novalidate></form>
+    </section>
+
+    <section class="preview-col" aria-label="Preview and code">
+      <div class="bar">
+        <div class="seg" role="group" aria-label="Preview width">
+          <button type="button" id="w-desk" aria-pressed="true">Article column</button>
+          <button type="button" id="w-phone" aria-pressed="false">Phone</button>
+        </div>
+        <div class="seg" role="group" aria-label="Preview site mode">
+          <button type="button" id="m-light" aria-pressed="true">Light</button>
+          <button type="button" id="m-dark" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+      <div class="frame-box" id="frame-box"><iframe id="frame" title="Block preview" sandbox="allow-scripts allow-popups"></iframe></div>
+      <div id="messages"></div>
+      <div class="opts">
+        <label id="scripts-wrap"><input type="checkbox" id="scripts"> Include enhancement script</label>
+        <span id="scripts-help"></span>
+      </div>
+      <div class="row">
+        <button class="btn" type="button" id="copy">Copy HTML</button>
+        <button class="btn ghost" type="button" id="copy-json" title="Field values in the Strapi component shape">Copy Strapi JSON</button>
+      </div>
+      <details class="code"><summary>View HTML</summary><pre><code id="code"></code></pre></details>
+      <p class="hint">Paste into the article body as HTML (Markdown or HTML source view). Strapi's rich-text "Blocks" editor does not accept raw HTML.</p>
+    </section>
+  </div>
+</div>
+
+<dialog id="import">
+  <h3>Edit a pasted block</h3>
+  <p>Paste HTML copied from this generator. The fields are restored from it.</p>
+  <textarea id="import-text" aria-label="Block HTML"></textarea>
+  <p id="import-err" style="color:var(--err)" hidden>No generator data found in that HTML. Only blocks made with this generator can be loaded back.</p>
+  <div class="row" style="justify-content:flex-end;margin:10px 0 0">
+    <button class="btn ghost" type="button" id="import-cancel">Cancel</button>
+    <button class="btn" type="button" id="import-go">Load</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+
+<script type="module">
+import { BLOCKS, defaults, itemDefaults, missing, render, decodeSource, esc, uid } from "./blocks.js";
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem("fbb-gen:" + k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem("fbb-gen:" + k, JSON.stringify(v)); } catch {} },
+};
+
+const SCRIPT_HELP = {
+  "office-hours": "Adds “Next: Fri 20 Nov” and the reader's local time. Calendar links work without it.",
+  gallery: "Adds the full-screen photo viewer. Without it, each photo opens full size in a new tab.",
+};
+
+let block = BLOCKS.find(b => b.type === store.get("last")) || BLOCKS[0];
+let data;
+let blockId = uid();   // stable per editing session so the HTML doesn't churn on each keystroke
+let dark = false;
+
+/* ---------- picker */
+const picker = $("#picker");
+BLOCKS.forEach(b => {
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.textContent = b.name; btn.dataset.type = b.type;
+  btn.addEventListener("click", () => select(b));
+  picker.appendChild(btn);
+});
+
+function select(b, preset) {
+  block = b; store.set("last", b.type); blockId = uid();
+  data = preset || store.get("draft:" + b.type) || defaults(b);
+  picker.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.type === b.type)));
+  $("#form-title").textContent = b.name;
+  $("#form-blurb").textContent = b.blurb + "  Strapi component: " + b.strapi;
+  const help = SCRIPT_HELP[b.type];
+  $("#scripts-wrap").hidden = !help;
+  $("#scripts-help").textContent = help || "";
+  $("#scripts").checked = !!store.get("scripts:" + b.type);
+  buildForm(); update();
+}
+
+/* ---------- form */
+function input(f, value, onChange) {
+  const wrap = document.createElement("label");
+  wrap.className = "f";
+  const id = "f-" + Math.random().toString(36).slice(2);
+  wrap.innerHTML = `<span>${esc(f.label)}${f.required ? " <em>*</em>" : ""}</span>`;
+  let el;
+  if (f.type === "textarea") el = document.createElement("textarea");
+  else if (f.type === "select") {
+    el = document.createElement("select");
+    f.options.forEach(o => { const op = document.createElement("option"); op.value = o; op.textContent = o[0].toUpperCase() + o.slice(1); el.appendChild(op); });
+  } else {
+    el = document.createElement("input");
+    el.type = { url: "url", image: "url", date: "date", time: "time", number: "number" }[f.type] || "text";
+    if (f.min != null) el.min = f.min;
+  }
+  el.id = id; el.value = value ?? "";
+  if (f.required) el.required = true;
+  if (f.type === "image") {
+    const row = document.createElement("div"); row.className = "img-row";
+    const thumb = document.createElement("img"); thumb.alt = "";
+    const sync = () => { thumb.src = el.value || ""; thumb.style.visibility = el.value ? "visible" : "hidden"; };
+    sync(); el.addEventListener("input", sync);
+    row.append(el, thumb); wrap.appendChild(row);
+  } else wrap.appendChild(el);
+  if (f.help) { const s = document.createElement("small"); s.textContent = f.help; wrap.appendChild(s); }
+  el.addEventListener("input", () => onChange(f.type === "number" ? (el.value === "" ? "" : Number(el.value)) : el.value));
+  return wrap;
+}
+
+function buildForm() {
+  const form = $("#form"); form.innerHTML = "";
+  for (const f of block.fields) {
+    if (f.type !== "list") { form.appendChild(input(f, data[f.key], v => { data[f.key] = v; update(); })); continue; }
+    const fs = document.createElement("fieldset");
+    fs.innerHTML = `<legend>${esc(f.label)}${f.max ? ` (max ${f.max})` : ""}</legend>`;
+    const rows = data[f.key] = data[f.key] || [];
+    rows.forEach((row, i) => {
+      const item = document.createElement("div"); item.className = "item";
+      const head = document.createElement("div"); head.className = "item-head";
+      head.innerHTML = `<span>${esc(f.itemLabel)} ${i + 1}</span><div></div>`;
+      const ctl = head.lastChild;
+      const mk = (txt, label, fn, cls = "") => { const b = document.createElement("button"); b.type = "button"; b.className = "btn ghost small " + cls; b.textContent = txt; b.setAttribute("aria-label", label); b.addEventListener("click", fn); ctl.appendChild(b); return b; };
+      mk("↑", `Move ${f.itemLabel} ${i + 1} up`, () => { if (i) { [rows[i - 1], rows[i]] = [rows[i], rows[i - 1]]; buildForm(); update(); } }).disabled = i === 0;
+      mk("↓", `Move ${f.itemLabel} ${i + 1} down`, () => { if (i < rows.length - 1) { [rows[i + 1], rows[i]] = [rows[i], rows[i + 1]]; buildForm(); update(); } }).disabled = i === rows.length - 1;
+      mk("Remove", `Remove ${f.itemLabel} ${i + 1}`, () => { rows.splice(i, 1); buildForm(); update(); }, "danger").disabled = rows.length <= (f.min || 0);
+      item.appendChild(head);
+      f.fields.forEach(sf => item.appendChild(input(sf, row[sf.key], v => { row[sf.key] = v; update(); })));
+      fs.appendChild(item);
+    });
+    const add = document.createElement("button");
+    add.type = "button"; add.className = "btn ghost small add"; add.textContent = "+ Add " + f.itemLabel.toLowerCase();
+    add.disabled = !!f.max && rows.length >= f.max;
+    add.addEventListener("click", () => { rows.push(itemDefaults(f)); buildForm(); update(); });
+    fs.appendChild(add);
+    form.appendChild(fs);
+  }
+}
+
+/* ---------- preview */
+const frame = $("#frame");
+let html = "";
+let heightTimer;
+window.addEventListener("message", e => {
+  if (e.source === frame.contentWindow && e.data && e.data.fbbHeight) frame.style.height = Math.max(160, e.data.fbbHeight) + "px";
+});
+
+function previewDoc(snippet) {
+  return `<!doctype html><html${dark ? ' data-theme="dark"' : ""}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700&display=swap">
+<style>body{margin:0;background:${dark ? "#0b0f1c" : "#fff4ee"};color:${dark ? "#d6dae0" : "#252525"};font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:24px}
+.col{max-width:760px;margin:0 auto;padding:28px 16px}.ctx{margin:0 0 24px;opacity:.75}.ctx:last-child{margin:0}</style></head>
+<body><div class="col"><p class="ctx">Article text before the block sits here, so spacing and type match the live post.</p>
+${snippet}
+<p class="ctx">Article text after the block continues here.</p></div>
+<script>new ResizeObserver(function(){parent.postMessage({fbbHeight:document.body.scrollHeight},"*")}).observe(document.body);<\/script></body></html>`;
+}
+
+function update() {
+  store.set("draft:" + block.type, data);
+  const scripts = $("#scripts").checked && !!SCRIPT_HELP[block.type];
+  html = render(block, data, { scripts, id: blockId });
+  $("#code").textContent = html;
+  clearTimeout(heightTimer);
+  heightTimer = setTimeout(() => { frame.srcdoc = previewDoc(html); }, 120);
+  const miss = missing(block, data);
+  const warn = block.validate ? block.validate(data) : [];
+  const box = $("#messages"); box.innerHTML = "";
+  if (miss.length) box.insertAdjacentHTML("beforeend", `<div class="msg"><b>Still to fill in:</b><ul>${miss.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div>`);
+  if (warn.length) box.insertAdjacentHTML("beforeend", `<div class="msg"><ul>${warn.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div>`);
+}
+
+/* ---------- actions */
+const toast = $("#toast"); let tt;
+function say(m) { toast.textContent = m; toast.hidden = false; clearTimeout(tt); tt = setTimeout(() => toast.hidden = true, 2200); }
+async function copy(text, label) {
+  try { await navigator.clipboard.writeText(text); say("Copied " + label); }
+  catch { const r = document.createRange(); r.selectNodeContents($("#code")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("details.code").open = true; say("Text selected. Press Ctrl+C or ⌘C"); }
+}
+$("#copy").addEventListener("click", () => {
+  const miss = missing(block, data);
+  if (miss.length && !confirm("Some required fields are empty (" + miss.join(", ") + "). Copy anyway?")) return;
+  copy(html, block.name + " HTML");
+});
+$("#copy-json").addEventListener("click", () => copy(JSON.stringify({ __component: block.strapi, ...data }, null, 2), "Strapi JSON"));
+$("#scripts").addEventListener("change", e => { store.set("scripts:" + block.type, e.target.checked); update(); });
+$("#load-example").addEventListener("click", () => { data = { ...defaults(block), ...structuredClone(block.example) }; if (block.type === "office-hours") data.firstSessionDate = nextWeekday(data.dayOfWeek); buildForm(); update(); });
+$("#reset").addEventListener("click", () => { if (confirm("Clear all fields for " + block.name + "?")) { data = defaults(block); buildForm(); update(); } });
+
+function nextWeekday(name) {
+  const want = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"].indexOf(name);
+  const d = new Date(); d.setDate(d.getDate() + ((want - d.getDay() + 7) % 7 || 7));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function seg(a, b, fn) {
+  const set = on => { a.setAttribute("aria-pressed", String(!on)); b.setAttribute("aria-pressed", String(on)); fn(on); };
+  a.addEventListener("click", () => set(false)); b.addEventListener("click", () => set(true));
+}
+seg($("#w-desk"), $("#w-phone"), on => $("#frame-box").classList.toggle("phone", on));
+seg($("#m-light"), $("#m-dark"), on => { dark = on; frame.srcdoc = previewDoc(html); });
+
+const dlg = $("#import");
+$("#open-import").addEventListener("click", () => { $("#import-text").value = ""; $("#import-err").hidden = true; dlg.showModal(); });
+$("#import-cancel").addEventListener("click", () => dlg.close());
+$("#import-go").addEventListener("click", () => {
+  const got = decodeSource($("#import-text").value);
+  const b = got && BLOCKS.find(x => x.type === got.type);
+  if (!b) { $("#import-err").hidden = false; return; }
+  dlg.close(); select(b, { ...defaults(b), ...got.data }); say("Loaded " + b.name);
+});
+
+select(block);
+</script>
+</body>
+</html>

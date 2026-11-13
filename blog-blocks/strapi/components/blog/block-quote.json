@@ -1,0 +1,35 @@
+{
+  "collectionName": "components_blog_block_quotes",
+  "info": {
+    "displayName": "Quote",
+    "icon": "quote",
+    "description": "Quote credited to a speaker or source"
+  },
+  "options": {},
+  "attributes": {
+    "quote": {
+      "type": "text",
+      "required": true
+    },
+    "authorName": {
+      "type": "string",
+      "required": true
+    },
+    "authorRole": {
+      "type": "string"
+    },
+    "authorImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "sourceLabel": {
+      "type": "string"
+    },
+    "sourceUrl": {
+      "type": "string"
+    }
+  }
+}
