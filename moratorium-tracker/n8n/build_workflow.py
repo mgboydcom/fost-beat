@@ -18,7 +18,9 @@ SETUP_NOTE = """## Data centre moratorium tracker (Gemini) — setup
 5. Click **Execute workflow** once to test, then toggle the workflow **Active**.
 
 Runs daily at 07:00 Madrid time. Headlines go to Gemini one at a time (about 10 a minute) to stay inside the free tier's rate limit, so a full run takes up to ~7 minutes.
-Rows already in the sheet are never added again, even after moving to a new n8n account."""
+Rows already in the sheet are never added again, even after moving to a new n8n account.
+
+An email is sent after every run with a run report (headlines found, sent to Gemini, Gemini errors). To catch up after a gap, set `lookbackHours` in Config to e.g. 504 (21 days) and raise `maxItemsPerRun`, run once, then set them back."""
 
 SYSTEM_PROMPT = (
     "You classify news items for a tracker of government actions that restrict new data centre construction anywhere in the world.\n\n"
@@ -42,7 +44,7 @@ SYSTEM_PROMPT = (
 CONFIG_CODE = """return [{ json: {
   // ---- EDIT THESE ----
   notifyEmail: 'CHANGE-ME@example.com', // replace with the address that should get the daily digest
-  lookbackHours: 48,          // ignore articles older than this
+  lookbackHours: 48,          // how far back to search. For a one-off catch-up run set e.g. 504 (21 days), then set back to 48
   maxItemsPerRun: 60,         // cap on items sent to Gemini per run (stays well inside free-tier daily limits)
   confidenceThreshold: 0.6,   // minimum classifier confidence to log an action
   model: 'gemini-flash-latest', // any Gemini model name from Google AI Studio
@@ -67,10 +69,11 @@ const feeds = [
   { lang: 'ja',    hl: 'ja',    gl: 'JP', ceid: 'JP:ja', q: 'データセンター (モラトリアム OR 凍結 OR 禁止 OR 停止)' },
 ];
 
+const days = Math.max(1, Math.ceil($('Config').first().json.lookbackHours / 24));
 return feeds.map(f => ({
   json: {
     lang: f.lang,
-    url: `https://news.google.com/rss/search?q=${encodeURIComponent(f.q + ' when:2d')}&hl=${f.hl}&gl=${f.gl}&ceid=${f.ceid}`
+    url: `https://news.google.com/rss/search?q=${encodeURIComponent(f.q + ' when:' + days + 'd')}&hl=${f.hl}&gl=${f.gl}&ceid=${f.ceid}`
   }
 }));"""
 
@@ -181,21 +184,30 @@ const highTypes = ['adopted', 'ban', 'extended'];
 const highLevels = ['national', 'state', 'region', 'grid_operator'];
 const month = new Date().toISOString().slice(0, 7);
 const out = [];
+const stats = { sent: originals.length, geminiErrors: 0, firstError: '', unreadable: 0,
+  notAction: 0, lowConfidence: 0, alreadyLogged: 0 };
 
 responses.forEach((r, idx) => {
+  if (idx >= originals.length) return; // empty placeholder when there was nothing to classify
   const orig = (originals[idx] && originals[idx].json) || {};
+  if (r.json && r.json.error) {
+    stats.geminiErrors++;
+    const e = r.json.error;
+    if (!stats.firstError) stats.firstError = String((e && (e.message || e.description)) || JSON.stringify(e)).slice(0, 300);
+    return;
+  }
   const parts = (r.json && r.json.candidates && r.json.candidates[0] &&
     r.json.candidates[0].content && r.json.candidates[0].content.parts) || [];
   let text = parts.filter(p => p && p.text && !p.thought).map(p => p.text).join('');
   text = text.replace(/```json|```/g, '').trim();
   let c;
-  try { c = JSON.parse(text); } catch (e) { return; }
+  try { c = JSON.parse(text); } catch (e) { stats.unreadable++; return; }
   if (Array.isArray(c)) c = c[0];
-  if (!c || !c.is_moratorium_action) return;
-  if ((Number(c.confidence) || 0) < cfg.confidenceThreshold) return;
+  if (!c || !c.is_moratorium_action) { stats.notAction++; return; }
+  if ((Number(c.confidence) || 0) < cfg.confidenceThreshold) { stats.lowConfidence++; return; }
 
   const key = actionKey(c.country, c.jurisdiction, c.action_type);
-  if (sheetActions.has(key) || sd.seenActions[key + '|' + month]) return;
+  if (sheetActions.has(key) || sd.seenActions[key + '|' + month]) { stats.alreadyLogged++; return; }
   sd.seenActions[key + '|' + month] = { ts: Date.now() };
   sheetActions.add(key);
 
@@ -220,11 +232,28 @@ responses.forEach((r, idx) => {
   }});
 });
 
+// Run report: always sent as the last item, so the run never stops silently here
+const rssCount = $('Read news feeds').all().filter(i => i.json && i.json.title).length;
+const g = $('GDELT search').first();
+const gdeltCount = (g && g.json && g.json.articles && g.json.articles.length) || 0;
+out.push({ json: { _report: true, fetched: rssCount + gdeltCount, logged: out.length,
+  lookbackHours: cfg.lookbackHours, ...stats } });
 return out;"""
 
-DIGEST_CODE = r"""// Builds one email per run summarising the new actions logged to the sheet.
-const rows = $('Parse & classify').all().map(i => i.json);
-if (!rows.length) return [];
+ROWS_ONLY_CODE = r"""// Passes on only the new sheet rows (drops the run report).
+return $input.all().filter(i => !i.json._report);"""
+
+DIGEST_CODE = r"""// Builds one email per run: new actions logged to the sheet, plus a run report.
+const all = $input.all().map(i => i.json);
+const rep = all.find(r => r._report) || {};
+const rows = all.filter(r => !r._report);
+const days = Math.round((rep.lookbackHours || 0) / 24 * 10) / 10;
+const report = `
+  <p style="font-family:sans-serif;font-size:12px;color:#555;">Run report: searched the last ${days} day(s);
+  ${rep.fetched || 0} headlines found; ${rep.sent || 0} new ones sent to Gemini;
+  ${rep.notAction || 0} not a moratorium action; ${rep.lowConfidence || 0} below the confidence threshold;
+  ${rep.alreadyLogged || 0} already in the sheet; ${rep.unreadable || 0} unreadable replies;
+  <b>${rep.geminiErrors || 0} Gemini errors</b>${rep.firstError ? ' (first: ' + String(rep.firstError).replace(/</g, '&lt;') + ')' : ''}.</p>`;
 
 rows.sort((a, b) => (a.priority === 'high' ? -1 : 1) - (b.priority === 'high' ? -1 : 1));
 const high = rows.filter(r => r.priority === 'high').length;
@@ -240,7 +269,7 @@ const rowHtml = r => `
     <td style="padding:6px;border-bottom:1px solid #ddd;"><a href="${esc(r.source_url)}">source</a></td>
   </tr>`;
 
-const html = `
+const html = !rows.length ? `<p>No new data centre moratorium actions logged in this run.</p>${report}` : `
   <p>${rows.length} new data centre moratorium action(s) logged today, ${high} high priority.
   Entries are AI-classified and marked <i>verified = no</i> in the sheet until checked.</p>
   <table style="border-collapse:collapse;font-family:sans-serif;font-size:13px;">
@@ -249,10 +278,12 @@ const html = `
       <th style="padding:6px;">Action</th><th style="padding:6px;">Summary</th><th style="padding:6px;">Link</th>
     </tr>
     ${rows.map(rowHtml).join('')}
-  </table>`;
+  </table>${report}`;
 
 return [{ json: {
-  subject: `Data centre moratorium tracker: ${rows.length} new (${high} high priority)`,
+  subject: rep.geminiErrors && !rows.length
+    ? `Data centre moratorium tracker: ${rep.geminiErrors} Gemini errors, nothing logged`
+    : `Data centre moratorium tracker: ${rows.length} new (${high} high priority)`,
   html,
 }}];"""
 
@@ -279,7 +310,7 @@ nodes = [
             {"name": "mode", "value": "artlist"},
             {"name": "format", "value": "json"},
             {"name": "maxrecords", "value": "100"},
-            {"name": "timespan", "value": "2d"},
+            {"name": "timespan", "value": "={{ Math.max(1, Math.ceil($('Config').first().json.lookbackHours / 24)) }}d"},
             {"name": "sort", "value": "datedesc"}]},
         "options": {"response": {"response": {"responseFormat": "json"}}, "timeout": 30000}},
      "id": nid(), "name": "GDELT search", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [880, 0],
@@ -305,17 +336,24 @@ nodes = [
      "id": nid(), "name": "Parse & classify", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1760, 0]},
     {"parameters": {"operation": "append", "documentId": sheet_doc, "sheetName": sheet_tab,
         "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": [], "schema": []}, "options": {}},
-     "id": nid(), "name": "Log to Google Sheet", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5, "position": [1980, 0]},
+     "id": nid(), "name": "Log to Google Sheet", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5, "position": [2200, -140]},
+    {"parameters": {"jsCode": ROWS_ONLY_CODE},
+     "id": nid(), "name": "New rows only", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1980, -140]},
     {"parameters": {"jsCode": DIGEST_CODE},
-     "id": nid(), "name": "Build digest", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [2200, 0], "executeOnce": True},
+     "id": nid(), "name": "Build digest", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1980, 140]},
     {"parameters": {"sendTo": "={{ $('Config').first().json.notifyEmail }}", "subject": "={{ $json.subject }}",
         "emailType": "html", "message": "={{ $json.html }}", "options": {"appendAttribution": False}},
-     "id": nid(), "name": "Email digest", "type": "n8n-nodes-base.gmail", "typeVersion": 2.1, "position": [2420, 0]},
+     "id": nid(), "name": "Email digest", "type": "n8n-nodes-base.gmail", "typeVersion": 2.1, "position": [2200, 140]},
 ]
 
 chain = ["Daily 07:00", "Config", "Build feed list", "Read news feeds", "GDELT search", "Read existing rows",
-         "Normalise & dedupe", "Classify with Gemini", "Parse & classify", "Log to Google Sheet", "Build digest", "Email digest"]
+         "Normalise & dedupe", "Classify with Gemini", "Parse & classify"]
 connections = {a: {"main": [[{"node": b, "type": "main", "index": 0}]]} for a, b in zip(chain, chain[1:])}
+# Parse & classify feeds two branches: new rows go to the sheet; the digest always gets everything
+connections["Parse & classify"] = {"main": [[{"node": "New rows only", "type": "main", "index": 0},
+                                             {"node": "Build digest", "type": "main", "index": 0}]]}
+connections["New rows only"] = {"main": [[{"node": "Log to Google Sheet", "type": "main", "index": 0}]]}
+connections["Build digest"] = {"main": [[{"node": "Email digest", "type": "main", "index": 0}]]}
 
 wf = {"name": "Data centre moratorium tracker (Gemini)", "nodes": nodes, "connections": connections,
       "active": False, "settings": {"executionOrder": "v1", "timezone": "Europe/Madrid"}, "pinData": {}, "meta": {}}

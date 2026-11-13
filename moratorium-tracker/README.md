@@ -63,14 +63,21 @@ To refresh right away: **Actions → Update map locations → Run workflow**.
 Runs daily at 07:00 Europe/Madrid:
 
 1. Searches Google News RSS in 13 languages and markets, plus GDELT, for moratorium, ban,
-   pause or freeze stories from the last 48 hours.
+   pause or freeze stories from the last `lookbackHours` (48 by default).
 2. Reads the sheet and skips stories whose link or headline is already there, and actions
    already logged for the same place in the last 30 days.
 3. Sends each remaining headline to Gemini (at most 60 per run, about 10 a minute to stay
    inside the free tier), which decides whether it is a real moratorium action and extracts
    place, level, dates, scope and summary.
 4. Adds actions with confidence of at least 0.6 to the `Moratoriums` tab.
-5. Emails a digest.
+5. Emails a digest after every run, including a run report: headlines found, how many were
+   sent to Gemini, and how many Gemini errors there were (with the first error message). An
+   email saying "Gemini errors, nothing logged" usually means a wrong key or model name.
+
+**Catching up after a gap:** a daily run only sees the last 48 hours. To pick up older
+stories, set `lookbackHours` in the Config node to cover the gap (for example `504` for 21
+days) and raise `maxItemsPerRun` (for example `200`), run the workflow once by hand, then set
+both back to `48` and `60`. Rows already in the sheet are skipped, so overlapping is safe.
 
 The workflow file has no keys or passwords. The digest address is a placeholder,
 `CHANGE-ME@example.com`, because this repo is public; set the real one in the **Config** node
@@ -135,6 +142,6 @@ Re-import the file in n8n afterwards; credentials have to be reconnected on impo
 ## Open items
 
 - The Gemini workflow has not yet run against the real Gemini API.
-- The sheet was last changed on 23 Oct 2026, so no rows have been added since. Check that
-  the workflow is imported and active in the new n8n account.
+- No rows have been added since 23 Oct 2026 (including the 8 Nov 2026 US ballot results).
+  Run one catch-up run (see above) once the workflow works in the new n8n account.
 - Sheet link sharing should be **Viewer**, not Editor.

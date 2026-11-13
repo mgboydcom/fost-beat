@@ -3,12 +3,12 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Data centre moratorium tracker (Gemini) — setup\n\n1. **Config** node: replace `CHANGE-ME@example.com` with the address that should get the daily digest. `model` is the Gemini model; if the test run says the model isn't found, copy a current model name from Google AI Studio.\n2. **Classify with Gemini**: create a *Header Auth* credential. Name: `x-goog-api-key`, Value: your Gemini API key (aistudio.google.com → Get API key).\n3. **Read existing rows** and **Log to Google Sheet**: connect your Google account (same credential for both). The sheet is already set.\n4. **Email digest**: connect Gmail.\n5. Click **Execute workflow** once to test, then toggle the workflow **Active**.\n\nRuns daily at 07:00 Madrid time. Headlines go to Gemini one at a time (about 10 a minute) to stay inside the free tier's rate limit, so a full run takes up to ~7 minutes.\nRows already in the sheet are never added again, even after moving to a new n8n account.",
+        "content": "## Data centre moratorium tracker (Gemini) — setup\n\n1. **Config** node: replace `CHANGE-ME@example.com` with the address that should get the daily digest. `model` is the Gemini model; if the test run says the model isn't found, copy a current model name from Google AI Studio.\n2. **Classify with Gemini**: create a *Header Auth* credential. Name: `x-goog-api-key`, Value: your Gemini API key (aistudio.google.com → Get API key).\n3. **Read existing rows** and **Log to Google Sheet**: connect your Google account (same credential for both). The sheet is already set.\n4. **Email digest**: connect Gmail.\n5. Click **Execute workflow** once to test, then toggle the workflow **Active**.\n\nRuns daily at 07:00 Madrid time. Headlines go to Gemini one at a time (about 10 a minute) to stay inside the free tier's rate limit, so a full run takes up to ~7 minutes.\nRows already in the sheet are never added again, even after moving to a new n8n account.\n\nAn email is sent after every run with a run report (headlines found, sent to Gemini, Gemini errors). To catch up after a gap, set `lookbackHours` in Config to e.g. 504 (21 days) and raise `maxItemsPerRun`, run once, then set them back.",
         "height": 480,
         "width": 560,
         "color": 6
       },
-      "id": "17f875e2-a466-4152-a44e-399b63b3e8be",
+      "id": "1a5492fe-1d27-409e-a976-f0a425200fb4",
       "name": "Setup notes",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -30,7 +30,7 @@
           ]
         }
       },
-      "id": "b5e1d73f-07f9-42f2-92b3-25ddb750e0ef",
+      "id": "3ba105d5-757b-497f-b062-cd8092ad8f38",
       "name": "Daily 07:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -41,9 +41,9 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: {\n  // ---- EDIT THESE ----\n  notifyEmail: 'CHANGE-ME@example.com', // replace with the address that should get the daily digest\n  lookbackHours: 48,          // ignore articles older than this\n  maxItemsPerRun: 60,         // cap on items sent to Gemini per run (stays well inside free-tier daily limits)\n  confidenceThreshold: 0.6,   // minimum classifier confidence to log an action\n  model: 'gemini-flash-latest', // any Gemini model name from Google AI Studio\n  // --------------------\n  systemPrompt: \"You classify news items for a tracker of government actions that restrict new data centre construction anywhere in the world.\\n\\nReturn ONLY a JSON object, with no prose and no code fences.\\n\\nCOUNT as a moratorium action: a government body, regulator, planning authority or grid operator adopting, proposing, extending, lifting or rejecting a moratorium, ban, pause, freeze, or blanket refusal of new data centre permits or grid connections. Votes by residents on a ban also count.\\n\\nDO NOT count: opinion pieces or analysis with no specific new action; the rejection of a single project; bans that only cover crypto mining; general energy or efficiency rules that do not pause development; articles that only recap older actions with no new development.\\n\\nSchema:\\n{\\n  \\\"is_moratorium_action\\\": boolean,\\n  \\\"action_type\\\": \\\"adopted\\\" | \\\"proposed\\\" | \\\"extended\\\" | \\\"lifted\\\" | \\\"rejected\\\" | \\\"ban\\\" | \\\"other\\\",\\n  \\\"jurisdiction\\\": string (US places as 'City, ST' or 'County Name, ST' with the two-letter state code, e.g. 'Manatee County, FL'; US states by full name; elsewhere the official name of the place or body),\\n  \\\"level\\\": \\\"city\\\" | \\\"county\\\" | \\\"region\\\" | \\\"state\\\" | \\\"national\\\" | \\\"grid_operator\\\",\\n  \\\"country\\\": string (English name),\\n  \\\"scope\\\": string (what is paused, e.g. 'new data centres over 50 MW', or '' if unknown),\\n  \\\"effective_date\\\": string or null (YYYY-MM-DD),\\n  \\\"expiry\\\": string or null,\\n  \\\"summary\\\": string (start with 'Status: active.', 'Status: proposed.', 'Status: rejected.', 'Status: lifted.' or 'Status: expired.', then one sentence in English),\\n  \\\"confidence\\\": number between 0 and 1\\n}\\n\\nIf the item is not in English, write every field in English. If is_moratorium_action is false, the other fields can be empty strings or null.\"\n} }];"
+        "jsCode": "return [{ json: {\n  // ---- EDIT THESE ----\n  notifyEmail: 'CHANGE-ME@example.com', // replace with the address that should get the daily digest\n  lookbackHours: 48,          // how far back to search. For a one-off catch-up run set e.g. 504 (21 days), then set back to 48\n  maxItemsPerRun: 60,         // cap on items sent to Gemini per run (stays well inside free-tier daily limits)\n  confidenceThreshold: 0.6,   // minimum classifier confidence to log an action\n  model: 'gemini-flash-latest', // any Gemini model name from Google AI Studio\n  // --------------------\n  systemPrompt: \"You classify news items for a tracker of government actions that restrict new data centre construction anywhere in the world.\\n\\nReturn ONLY a JSON object, with no prose and no code fences.\\n\\nCOUNT as a moratorium action: a government body, regulator, planning authority or grid operator adopting, proposing, extending, lifting or rejecting a moratorium, ban, pause, freeze, or blanket refusal of new data centre permits or grid connections. Votes by residents on a ban also count.\\n\\nDO NOT count: opinion pieces or analysis with no specific new action; the rejection of a single project; bans that only cover crypto mining; general energy or efficiency rules that do not pause development; articles that only recap older actions with no new development.\\n\\nSchema:\\n{\\n  \\\"is_moratorium_action\\\": boolean,\\n  \\\"action_type\\\": \\\"adopted\\\" | \\\"proposed\\\" | \\\"extended\\\" | \\\"lifted\\\" | \\\"rejected\\\" | \\\"ban\\\" | \\\"other\\\",\\n  \\\"jurisdiction\\\": string (US places as 'City, ST' or 'County Name, ST' with the two-letter state code, e.g. 'Manatee County, FL'; US states by full name; elsewhere the official name of the place or body),\\n  \\\"level\\\": \\\"city\\\" | \\\"county\\\" | \\\"region\\\" | \\\"state\\\" | \\\"national\\\" | \\\"grid_operator\\\",\\n  \\\"country\\\": string (English name),\\n  \\\"scope\\\": string (what is paused, e.g. 'new data centres over 50 MW', or '' if unknown),\\n  \\\"effective_date\\\": string or null (YYYY-MM-DD),\\n  \\\"expiry\\\": string or null,\\n  \\\"summary\\\": string (start with 'Status: active.', 'Status: proposed.', 'Status: rejected.', 'Status: lifted.' or 'Status: expired.', then one sentence in English),\\n  \\\"confidence\\\": number between 0 and 1\\n}\\n\\nIf the item is not in English, write every field in English. If is_moratorium_action is false, the other fields can be empty strings or null.\"\n} }];"
       },
-      "id": "ca601248-013b-4124-b6fc-8173253bb528",
+      "id": "905ff5c0-621e-46ac-94f6-eb01530f698c",
       "name": "Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -54,9 +54,9 @@
     },
     {
       "parameters": {
-        "jsCode": "// One Google News RSS search per language/market. Add or remove rows freely.\nconst feeds = [\n  { lang: 'en-US', hl: 'en-US', gl: 'US', ceid: 'US:en', q: '(\"data center\" OR \"data centre\" OR datacenter) (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'en-IE', hl: 'en-IE', gl: 'IE', ceid: 'IE:en', q: '(\"data centre\" OR \"data center\") (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'en-GB', hl: 'en-GB', gl: 'GB', ceid: 'GB:en', q: '(\"data centre\" OR \"data center\") (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'en-AU', hl: 'en-AU', gl: 'AU', ceid: 'AU:en', q: '(\"data centre\" OR \"data center\") (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'en-SG', hl: 'en-SG', gl: 'SG', ceid: 'SG:en', q: '(\"data centre\" OR \"data center\") (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'nl',    hl: 'nl',    gl: 'NL', ceid: 'NL:nl', q: '(datacenter OR datacentrum OR datacenters) (moratorium OR bouwstop OR verbod)' },\n  { lang: 'de',    hl: 'de',    gl: 'DE', ceid: 'DE:de', q: '(Rechenzentrum OR Rechenzentren) (Moratorium OR Baustopp OR Verbot)' },\n  { lang: 'fr',    hl: 'fr',    gl: 'FR', ceid: 'FR:fr', q: '(\"centre de données\" OR \"centres de données\" OR datacenter) (moratoire OR interdiction OR suspension)' },\n  { lang: 'es',    hl: 'es',    gl: 'ES', ceid: 'ES:es', q: '(\"centro de datos\" OR \"centros de datos\") (moratoria OR prohibición OR suspensión)' },\n  { lang: 'pt-BR', hl: 'pt-BR', gl: 'BR', ceid: 'BR:pt-419', q: '(\"data center\" OR \"centro de dados\" OR \"centros de dados\") (moratória OR proibição OR suspensão)' },\n  { lang: 'it',    hl: 'it',    gl: 'IT', ceid: 'IT:it', q: '(\"data center\" OR \"centri dati\") (moratoria OR divieto OR sospensione)' },\n  { lang: 'sv',    hl: 'sv',    gl: 'SE', ceid: 'SE:sv', q: '(datacenter OR datahall) (moratorium OR stopp OR förbud)' },\n  { lang: 'ja',    hl: 'ja',    gl: 'JP', ceid: 'JP:ja', q: 'データセンター (モラトリアム OR 凍結 OR 禁止 OR 停止)' },\n];\n\nreturn feeds.map(f => ({\n  json: {\n    lang: f.lang,\n    url: `https://news.google.com/rss/search?q=${encodeURIComponent(f.q + ' when:2d')}&hl=${f.hl}&gl=${f.gl}&ceid=${f.ceid}`\n  }\n}));"
+        "jsCode": "// One Google News RSS search per language/market. Add or remove rows freely.\nconst feeds = [\n  { lang: 'en-US', hl: 'en-US', gl: 'US', ceid: 'US:en', q: '(\"data center\" OR \"data centre\" OR datacenter) (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'en-IE', hl: 'en-IE', gl: 'IE', ceid: 'IE:en', q: '(\"data centre\" OR \"data center\") (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'en-GB', hl: 'en-GB', gl: 'GB', ceid: 'GB:en', q: '(\"data centre\" OR \"data center\") (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'en-AU', hl: 'en-AU', gl: 'AU', ceid: 'AU:en', q: '(\"data centre\" OR \"data center\") (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'en-SG', hl: 'en-SG', gl: 'SG', ceid: 'SG:en', q: '(\"data centre\" OR \"data center\") (moratorium OR ban OR pause OR freeze)' },\n  { lang: 'nl',    hl: 'nl',    gl: 'NL', ceid: 'NL:nl', q: '(datacenter OR datacentrum OR datacenters) (moratorium OR bouwstop OR verbod)' },\n  { lang: 'de',    hl: 'de',    gl: 'DE', ceid: 'DE:de', q: '(Rechenzentrum OR Rechenzentren) (Moratorium OR Baustopp OR Verbot)' },\n  { lang: 'fr',    hl: 'fr',    gl: 'FR', ceid: 'FR:fr', q: '(\"centre de données\" OR \"centres de données\" OR datacenter) (moratoire OR interdiction OR suspension)' },\n  { lang: 'es',    hl: 'es',    gl: 'ES', ceid: 'ES:es', q: '(\"centro de datos\" OR \"centros de datos\") (moratoria OR prohibición OR suspensión)' },\n  { lang: 'pt-BR', hl: 'pt-BR', gl: 'BR', ceid: 'BR:pt-419', q: '(\"data center\" OR \"centro de dados\" OR \"centros de dados\") (moratória OR proibição OR suspensão)' },\n  { lang: 'it',    hl: 'it',    gl: 'IT', ceid: 'IT:it', q: '(\"data center\" OR \"centri dati\") (moratoria OR divieto OR sospensione)' },\n  { lang: 'sv',    hl: 'sv',    gl: 'SE', ceid: 'SE:sv', q: '(datacenter OR datahall) (moratorium OR stopp OR förbud)' },\n  { lang: 'ja',    hl: 'ja',    gl: 'JP', ceid: 'JP:ja', q: 'データセンター (モラトリアム OR 凍結 OR 禁止 OR 停止)' },\n];\n\nconst days = Math.max(1, Math.ceil($('Config').first().json.lookbackHours / 24));\nreturn feeds.map(f => ({\n  json: {\n    lang: f.lang,\n    url: `https://news.google.com/rss/search?q=${encodeURIComponent(f.q + ' when:' + days + 'd')}&hl=${f.hl}&gl=${f.gl}&ceid=${f.ceid}`\n  }\n}));"
       },
-      "id": "b6b72d9f-cdbc-499f-817c-ef2cd4ad6092",
+      "id": "f6ad6098-701d-484c-8eec-7b36706f6ac0",
       "name": "Build feed list",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -70,7 +70,7 @@
         "url": "={{ $json.url }}",
         "options": {}
       },
-      "id": "46ab3ad2-1679-41d1-9518-f0b9f64f92cb",
+      "id": "36b9706f-af84-4aea-ba19-4ba94f1f7e92",
       "name": "Read news feeds",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1.1,
@@ -105,7 +105,7 @@
             },
             {
               "name": "timespan",
-              "value": "2d"
+              "value": "={{ Math.max(1, Math.ceil($('Config').first().json.lookbackHours / 24)) }}d"
             },
             {
               "name": "sort",
@@ -122,7 +122,7 @@
           "timeout": 30000
         }
       },
-      "id": "011a65f4-4c41-42b1-94dd-fc8bc1992251",
+      "id": "48f656a6-3110-411f-913d-fad2fabff2d4",
       "name": "GDELT search",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -148,7 +148,7 @@
         },
         "options": {}
       },
-      "id": "daeb25af-17ea-4f0d-ac81-6f23497b74e2",
+      "id": "be0fbc55-1dc0-4d3b-bb6d-4159bf8c1004",
       "name": "Read existing rows",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -163,7 +163,7 @@
       "parameters": {
         "jsCode": "// Combines Google News + GDELT results, drops old items, anything already seen in\n// earlier runs, and anything whose link or headline is already in the sheet.\nconst cfg = $('Config').first().json;\n\nconst rss = $('Read news feeds').all()\n  .map(i => i.json)\n  .filter(j => j && j.title && j.link && !j.error);\n\nconst gdeltFirst = $('GDELT search').first();\nconst gdeltArticles = (gdeltFirst && gdeltFirst.json && gdeltFirst.json.articles) || [];\n\nconst parseGdeltDate = s => {\n  const m = /^(\\d{4})(\\d{2})(\\d{2})T(\\d{2})(\\d{2})(\\d{2})Z$/.exec(s || '');\n  return m ? `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z` : null;\n};\n\nlet items = [\n  ...rss.map(j => ({\n    title: j.title,\n    link: j.link,\n    published: j.isoDate || j.pubDate || null,\n    snippet: (j.contentSnippet || '').slice(0, 500),\n    origin: 'google_news',\n  })),\n  ...gdeltArticles.map(a => ({\n    title: a.title,\n    link: a.url,\n    published: parseGdeltDate(a.seendate),\n    snippet: '',\n    origin: 'gdelt',\n    source_language: a.language || '',\n    source_country: a.sourcecountry || '',\n  })),\n];\n\n// Recency filter\nconst cutoff = Date.now() - cfg.lookbackHours * 3600 * 1000;\nitems = items.filter(i => !i.published || new Date(i.published).getTime() >= cutoff);\n\n// Google News titles end in \" - Source name\"; strip it so the same story from two feeds matches\nconst normTitle = t => (t || '')\n  .toLowerCase()\n  .replace(/\\s+-\\s+[^-]+$/, '')\n  .replace(/[^\\p{L}\\p{N} ]/gu, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\n// Everything already in the sheet (works even on a brand-new n8n account)\nconst sheetRows = $('Read existing rows').all().map(i => i.json || {});\nconst sheetLinks = new Set(sheetRows.map(r => String(r.source_url || '').trim()).filter(Boolean));\nconst sheetTitles = new Set(sheetRows.map(r => normTitle(r.headline)).filter(Boolean));\n\n// Cross-run memory (persists only when the workflow is ACTIVE and runs on schedule)\nconst sd = $getWorkflowStaticData('global');\nsd.seenTitles = sd.seenTitles || {};\nconst pruneBefore = Date.now() - 45 * 24 * 3600 * 1000;\nfor (const [k, v] of Object.entries(sd.seenTitles)) if (v < pruneBefore) delete sd.seenTitles[k];\n\nconst seenThisRun = new Set();\nconst fresh = [];\nfor (const i of items) {\n  const k = normTitle(i.title);\n  if (!k || seenThisRun.has(k) || sd.seenTitles[k]) continue;\n  if (sheetLinks.has(i.link) || sheetTitles.has(k)) continue;\n  seenThisRun.add(k);\n  fresh.push(i);\n}\n\nconst limited = fresh.slice(0, cfg.maxItemsPerRun);\nfor (const i of limited) sd.seenTitles[normTitle(i.title)] = Date.now();\n\nreturn limited.map(j => ({ json: j }));"
       },
-      "id": "798e9dd7-401c-4c79-a781-d7b3dea9397b",
+      "id": "a189e989-0f21-4282-bde6-a4dbebd2d41a",
       "name": "Normalise & dedupe",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -191,7 +191,7 @@
           "timeout": 60000
         }
       },
-      "id": "eb96506e-dc2c-4ea3-a759-422740e7d45a",
+      "id": "1ef3daf6-fc42-4abd-af35-9302fc4b0ed7",
       "name": "Classify with Gemini",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -207,9 +207,9 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parses Gemini's classification, keeps genuine moratorium actions, and de-duplicates by action.\nconst cfg = $('Config').first().json;\nconst responses = $input.all();\nconst originals = $('Normalise & dedupe').all();\n\nconst norm = s => String(s || '').toLowerCase().trim();\nconst actionKey = (country, jurisdiction, actionType) => [country, jurisdiction, actionType].map(norm).join('|');\n\n// Same action already in the sheet within the last 30 days (e.g. covered by another outlet)\nconst recentCutoff = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);\nconst sheetActions = new Set(\n  $('Read existing rows').all()\n    .map(i => i.json || {})\n    .filter(r => String(r.date_logged || '') >= recentCutoff)\n    .map(r => actionKey(r.country, r.jurisdiction, r.action_type))\n);\n\nconst sd = $getWorkflowStaticData('global');\nsd.seenActions = sd.seenActions || {};\nconst pruneBefore = Date.now() - 120 * 24 * 3600 * 1000;\nfor (const [k, v] of Object.entries(sd.seenActions)) if (v.ts < pruneBefore) delete sd.seenActions[k];\n\nconst highTypes = ['adopted', 'ban', 'extended'];\nconst highLevels = ['national', 'state', 'region', 'grid_operator'];\nconst month = new Date().toISOString().slice(0, 7);\nconst out = [];\n\nresponses.forEach((r, idx) => {\n  const orig = (originals[idx] && originals[idx].json) || {};\n  const parts = (r.json && r.json.candidates && r.json.candidates[0] &&\n    r.json.candidates[0].content && r.json.candidates[0].content.parts) || [];\n  let text = parts.filter(p => p && p.text && !p.thought).map(p => p.text).join('');\n  text = text.replace(/```json|```/g, '').trim();\n  let c;\n  try { c = JSON.parse(text); } catch (e) { return; }\n  if (Array.isArray(c)) c = c[0];\n  if (!c || !c.is_moratorium_action) return;\n  if ((Number(c.confidence) || 0) < cfg.confidenceThreshold) return;\n\n  const key = actionKey(c.country, c.jurisdiction, c.action_type);\n  if (sheetActions.has(key) || sd.seenActions[key + '|' + month]) return;\n  sd.seenActions[key + '|' + month] = { ts: Date.now() };\n  sheetActions.add(key);\n\n  const priority = (highTypes.includes(c.action_type) || highLevels.includes(c.level)) ? 'high' : 'normal';\n\n  out.push({ json: {\n    date_logged: new Date().toISOString().slice(0, 10),\n    country: c.country || '',\n    jurisdiction: c.jurisdiction || '',\n    level: c.level || '',\n    action_type: c.action_type || '',\n    scope: c.scope || '',\n    effective_date: c.effective_date || '',\n    expiry: c.expiry || '',\n    summary: c.summary || '',\n    priority,\n    confidence: c.confidence,\n    headline: orig.title || '',\n    source_url: orig.link || '',\n    found_via: orig.origin || '',\n    verified: 'no',\n  }});\n});\n\nreturn out;"
+        "jsCode": "// Parses Gemini's classification, keeps genuine moratorium actions, and de-duplicates by action.\nconst cfg = $('Config').first().json;\nconst responses = $input.all();\nconst originals = $('Normalise & dedupe').all();\n\nconst norm = s => String(s || '').toLowerCase().trim();\nconst actionKey = (country, jurisdiction, actionType) => [country, jurisdiction, actionType].map(norm).join('|');\n\n// Same action already in the sheet within the last 30 days (e.g. covered by another outlet)\nconst recentCutoff = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);\nconst sheetActions = new Set(\n  $('Read existing rows').all()\n    .map(i => i.json || {})\n    .filter(r => String(r.date_logged || '') >= recentCutoff)\n    .map(r => actionKey(r.country, r.jurisdiction, r.action_type))\n);\n\nconst sd = $getWorkflowStaticData('global');\nsd.seenActions = sd.seenActions || {};\nconst pruneBefore = Date.now() - 120 * 24 * 3600 * 1000;\nfor (const [k, v] of Object.entries(sd.seenActions)) if (v.ts < pruneBefore) delete sd.seenActions[k];\n\nconst highTypes = ['adopted', 'ban', 'extended'];\nconst highLevels = ['national', 'state', 'region', 'grid_operator'];\nconst month = new Date().toISOString().slice(0, 7);\nconst out = [];\nconst stats = { sent: originals.length, geminiErrors: 0, firstError: '', unreadable: 0,\n  notAction: 0, lowConfidence: 0, alreadyLogged: 0 };\n\nresponses.forEach((r, idx) => {\n  if (idx >= originals.length) return; // empty placeholder when there was nothing to classify\n  const orig = (originals[idx] && originals[idx].json) || {};\n  if (r.json && r.json.error) {\n    stats.geminiErrors++;\n    const e = r.json.error;\n    if (!stats.firstError) stats.firstError = String((e && (e.message || e.description)) || JSON.stringify(e)).slice(0, 300);\n    return;\n  }\n  const parts = (r.json && r.json.candidates && r.json.candidates[0] &&\n    r.json.candidates[0].content && r.json.candidates[0].content.parts) || [];\n  let text = parts.filter(p => p && p.text && !p.thought).map(p => p.text).join('');\n  text = text.replace(/```json|```/g, '').trim();\n  let c;\n  try { c = JSON.parse(text); } catch (e) { stats.unreadable++; return; }\n  if (Array.isArray(c)) c = c[0];\n  if (!c || !c.is_moratorium_action) { stats.notAction++; return; }\n  if ((Number(c.confidence) || 0) < cfg.confidenceThreshold) { stats.lowConfidence++; return; }\n\n  const key = actionKey(c.country, c.jurisdiction, c.action_type);\n  if (sheetActions.has(key) || sd.seenActions[key + '|' + month]) { stats.alreadyLogged++; return; }\n  sd.seenActions[key + '|' + month] = { ts: Date.now() };\n  sheetActions.add(key);\n\n  const priority = (highTypes.includes(c.action_type) || highLevels.includes(c.level)) ? 'high' : 'normal';\n\n  out.push({ json: {\n    date_logged: new Date().toISOString().slice(0, 10),\n    country: c.country || '',\n    jurisdiction: c.jurisdiction || '',\n    level: c.level || '',\n    action_type: c.action_type || '',\n    scope: c.scope || '',\n    effective_date: c.effective_date || '',\n    expiry: c.expiry || '',\n    summary: c.summary || '',\n    priority,\n    confidence: c.confidence,\n    headline: orig.title || '',\n    source_url: orig.link || '',\n    found_via: orig.origin || '',\n    verified: 'no',\n  }});\n});\n\n// Run report: always sent as the last item, so the run never stops silently here\nconst rssCount = $('Read news feeds').all().filter(i => i.json && i.json.title).length;\nconst g = $('GDELT search').first();\nconst gdeltCount = (g && g.json && g.json.articles && g.json.articles.length) || 0;\nout.push({ json: { _report: true, fetched: rssCount + gdeltCount, logged: out.length,\n  lookbackHours: cfg.lookbackHours, ...stats } });\nreturn out;"
       },
-      "id": "235b7cd1-ba40-41a7-98e1-b9e162a8f39b",
+      "id": "b83d5c0e-43e1-4b5f-8d48-86b003b489da",
       "name": "Parse & classify",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -239,28 +239,40 @@
         },
         "options": {}
       },
-      "id": "41c32ad6-5c78-4d56-9e8f-02bb50f7d8ef",
+      "id": "b325d0b1-f07b-4daa-a6eb-c1b59fefd33c",
       "name": "Log to Google Sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1980,
-        0
+        2200,
+        -140
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Builds one email per run summarising the new actions logged to the sheet.\nconst rows = $('Parse & classify').all().map(i => i.json);\nif (!rows.length) return [];\n\nrows.sort((a, b) => (a.priority === 'high' ? -1 : 1) - (b.priority === 'high' ? -1 : 1));\nconst high = rows.filter(r => r.priority === 'high').length;\n\nconst esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\nconst rowHtml = r => `\n  <tr>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${r.priority === 'high' ? '<b>HIGH</b>' : ''}</td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${esc(r.country)}</td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${esc(r.jurisdiction)} <small>(${esc(r.level)})</small></td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${esc(r.action_type)}</td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${esc(r.summary)}</td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\"><a href=\"${esc(r.source_url)}\">source</a></td>\n  </tr>`;\n\nconst html = `\n  <p>${rows.length} new data centre moratorium action(s) logged today, ${high} high priority.\n  Entries are AI-classified and marked <i>verified = no</i> in the sheet until checked.</p>\n  <table style=\"border-collapse:collapse;font-family:sans-serif;font-size:13px;\">\n    <tr style=\"background:#bba4ff;text-align:left;\">\n      <th style=\"padding:6px;\">Priority</th><th style=\"padding:6px;\">Country</th><th style=\"padding:6px;\">Jurisdiction</th>\n      <th style=\"padding:6px;\">Action</th><th style=\"padding:6px;\">Summary</th><th style=\"padding:6px;\">Link</th>\n    </tr>\n    ${rows.map(rowHtml).join('')}\n  </table>`;\n\nreturn [{ json: {\n  subject: `Data centre moratorium tracker: ${rows.length} new (${high} high priority)`,\n  html,\n}}];"
+        "jsCode": "// Passes on only the new sheet rows (drops the run report).\nreturn $input.all().filter(i => !i.json._report);"
       },
-      "id": "710e42e1-07f3-499b-825f-eb238ad877b1",
+      "id": "22f29782-8e86-4f87-b465-1067593bd3dc",
+      "name": "New rows only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Builds one email per run: new actions logged to the sheet, plus a run report.\nconst all = $input.all().map(i => i.json);\nconst rep = all.find(r => r._report) || {};\nconst rows = all.filter(r => !r._report);\nconst days = Math.round((rep.lookbackHours || 0) / 24 * 10) / 10;\nconst report = `\n  <p style=\"font-family:sans-serif;font-size:12px;color:#555;\">Run report: searched the last ${days} day(s);\n  ${rep.fetched || 0} headlines found; ${rep.sent || 0} new ones sent to Gemini;\n  ${rep.notAction || 0} not a moratorium action; ${rep.lowConfidence || 0} below the confidence threshold;\n  ${rep.alreadyLogged || 0} already in the sheet; ${rep.unreadable || 0} unreadable replies;\n  <b>${rep.geminiErrors || 0} Gemini errors</b>${rep.firstError ? ' (first: ' + String(rep.firstError).replace(/</g, '&lt;') + ')' : ''}.</p>`;\n\nrows.sort((a, b) => (a.priority === 'high' ? -1 : 1) - (b.priority === 'high' ? -1 : 1));\nconst high = rows.filter(r => r.priority === 'high').length;\n\nconst esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\nconst rowHtml = r => `\n  <tr>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${r.priority === 'high' ? '<b>HIGH</b>' : ''}</td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${esc(r.country)}</td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${esc(r.jurisdiction)} <small>(${esc(r.level)})</small></td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${esc(r.action_type)}</td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\">${esc(r.summary)}</td>\n    <td style=\"padding:6px;border-bottom:1px solid #ddd;\"><a href=\"${esc(r.source_url)}\">source</a></td>\n  </tr>`;\n\nconst html = !rows.length ? `<p>No new data centre moratorium actions logged in this run.</p>${report}` : `\n  <p>${rows.length} new data centre moratorium action(s) logged today, ${high} high priority.\n  Entries are AI-classified and marked <i>verified = no</i> in the sheet until checked.</p>\n  <table style=\"border-collapse:collapse;font-family:sans-serif;font-size:13px;\">\n    <tr style=\"background:#bba4ff;text-align:left;\">\n      <th style=\"padding:6px;\">Priority</th><th style=\"padding:6px;\">Country</th><th style=\"padding:6px;\">Jurisdiction</th>\n      <th style=\"padding:6px;\">Action</th><th style=\"padding:6px;\">Summary</th><th style=\"padding:6px;\">Link</th>\n    </tr>\n    ${rows.map(rowHtml).join('')}\n  </table>${report}`;\n\nreturn [{ json: {\n  subject: rep.geminiErrors && !rows.length\n    ? `Data centre moratorium tracker: ${rep.geminiErrors} Gemini errors, nothing logged`\n    : `Data centre moratorium tracker: ${rows.length} new (${high} high priority)`,\n  html,\n}}];"
+      },
+      "id": "8961736f-1566-41c8-80af-6a51d114ee78",
       "name": "Build digest",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2200,
-        0
-      ],
-      "executeOnce": true
+        1980,
+        140
+      ]
     },
     {
       "parameters": {
@@ -272,13 +284,13 @@
           "appendAttribution": false
         }
       },
-      "id": "57929983-af33-4087-9c87-64544ce44782",
+      "id": "92b0f366-538b-469a-956f-f5b5fd6b78ae",
       "name": "Email digest",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        2420,
-        0
+        2200,
+        140
       ]
     }
   ],
@@ -375,18 +387,23 @@
       "main": [
         [
           {
-            "node": "Log to Google Sheet",
+            "node": "New rows only",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build digest",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Log to Google Sheet": {
+    "New rows only": {
       "main": [
         [
           {
-            "node": "Build digest",
+            "node": "Log to Google Sheet",
             "type": "main",
             "index": 0
           }
