@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_blog_action_items",
+  "info": {
+    "displayName": "Action Item",
+    "icon": "check",
+    "description": "One numbered step in Into Action"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    }
+  }
+}

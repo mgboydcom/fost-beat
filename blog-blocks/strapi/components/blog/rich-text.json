@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_blog_rich_texts",
+  "info": {
+    "displayName": "Rich Text",
+    "icon": "align-left",
+    "description": "Standard article prose (headings, paragraphs, lists, links)"
+  },
+  "options": {},
+  "attributes": {
+    "body": {
+      "type": "blocks",
+      "required": true
+    }
+  }
+}

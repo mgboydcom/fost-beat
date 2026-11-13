@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_blog_pull_quotes",
+  "info": {
+    "displayName": "Pull Quote",
+    "icon": "quote",
+    "description": "Line lifted from the article in large type"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text",
+      "required": true
+    },
+    "attribution": {
+      "type": "string"
+    }
+  }
+}

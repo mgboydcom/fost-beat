@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_blog_key_takeawayss",
+  "info": {
+    "displayName": "Key Takeaways",
+    "icon": "bulletList",
+    "description": "Summary box after the intro"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "default": "Key takeaways"
+    },
+    "points": {
+      "type": "component",
+      "repeatable": true,
+      "component": "blog.takeaway-point",
+      "min": 1,
+      "max": 6
+    }
+  }
+}
