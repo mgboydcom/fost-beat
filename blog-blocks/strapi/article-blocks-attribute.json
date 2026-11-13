@@ -1,0 +1,15 @@
+{
+  "blocks": {
+    "type": "dynamiczone",
+    "components": [
+      "blog.rich-text",
+      "blog.into-action",
+      "blog.key-takeaways",
+      "blog.office-hours",
+      "blog.block-quote",
+      "blog.pull-quote",
+      "blog.gallery",
+      "blog.event-context"
+    ]
+  }
+}

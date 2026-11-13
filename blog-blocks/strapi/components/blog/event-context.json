@@ -1,0 +1,41 @@
+{
+  "collectionName": "components_blog_event_contexts",
+  "info": {
+    "displayName": "Event Context",
+    "icon": "microphone",
+    "description": "Which FOST event the article comes from and who spoke"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "From the stage"
+    },
+    "eventName": {
+      "type": "string",
+      "required": true
+    },
+    "eventDate": {
+      "type": "string"
+    },
+    "eventLocation": {
+      "type": "string"
+    },
+    "sessionTitle": {
+      "type": "string"
+    },
+    "speakers": {
+      "type": "component",
+      "repeatable": true,
+      "component": "blog.speaker"
+    },
+    "eventsUrl": {
+      "type": "string",
+      "default": "https://joinfost.io/events/"
+    },
+    "eventsLabel": {
+      "type": "string",
+      "default": "Upcoming FOST events"
+    }
+  }
+}

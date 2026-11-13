@@ -2,6 +2,14 @@
 
 Embeds for the [FOSTBeat](https://beat.joinfost.io) blog, served with GitHub Pages.
 
+## Blog block generator
+
+`blog-blocks/` is a fill-in-the-fields generator for the FOSTBeat article blocks (Into Action,
+Key Takeaways, Office Hours, Quote, Pull Quote, Gallery, Event Context). It outputs HTML to
+paste into Strapi. See [blog-blocks/README.md](blog-blocks/README.md).
+
+Live at: https://mgboydcom.github.io/fost-beat/blog-blocks/
+
 ## Data centre moratorium map
 
 `moratorium-map.html` is a Leaflet map of the
