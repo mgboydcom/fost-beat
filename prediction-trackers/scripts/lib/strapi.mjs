@@ -13,6 +13,9 @@ export function strapiConfig(env = process.env) {
     tagAttribute: env.STRAPI_TAG_ATTRIBUTE || 'name',
     tagValue: env.STRAPI_TAG_VALUE || 'prediction-idea',
     titleField: env.STRAPI_TITLE_FIELD || 'title',
+    // When set, ideas are posts whose title starts with this text (e.g.
+    // "Prediction:") and the tag settings are not used.
+    titlePrefix: (env.STRAPI_TITLE_PREFIX || '').trim(),
     bodyField: env.STRAPI_BODY_FIELD || 'content',
     adminUrl: (env.STRAPI_ADMIN_URL || env.STRAPI_URL || '').replace(/\/+$/, ''),
     contentType: env.STRAPI_CONTENT_TYPE || 'api::post.post',
@@ -25,8 +28,12 @@ export function strapiConfig(env = process.env) {
 
 export function buildQuery(cfg, page) {
   const p = new URLSearchParams();
-  p.set(`filters[${cfg.tagField}][${cfg.tagAttribute}][$eqi]`, cfg.tagValue);
-  p.set('populate[0]', cfg.tagField);
+  if (cfg.titlePrefix) {
+    p.set(`filters[${cfg.titleField}][$startsWithi]`, cfg.titlePrefix);
+  } else {
+    p.set(`filters[${cfg.tagField}][${cfg.tagAttribute}][$eqi]`, cfg.tagValue);
+    p.set('populate[0]', cfg.tagField);
+  }
   p.set('pagination[page]', String(page));
   p.set('pagination[pageSize]', '100');
   if (cfg.version === '4') p.set('publicationState', 'preview');
@@ -83,11 +90,15 @@ export function normaliseEntry(cfg, entry) {
 // misconfigured field silently matching everything.
 export function ideasFromResponses(cfg, responses) {
   const want = cfg.tagValue.toLowerCase();
+  const prefix = cfg.titlePrefix.toLowerCase();
   const byId = new Map();
   for (const res of responses) {
     for (const entry of res.data || []) {
       const e = normaliseEntry(cfg, entry);
-      if (!e.tags.some(t => t.toLowerCase() === want)) continue;
+      if (prefix) {
+        if (!e.title.toLowerCase().startsWith(prefix)) continue;
+        e.title = e.title.slice(prefix.length).trim() || e.title;
+      } else if (!e.tags.some(t => t.toLowerCase() === want)) continue;
       if (!byId.has(e.id)) byId.set(e.id, e);
     }
   }

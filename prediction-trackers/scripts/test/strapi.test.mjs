@@ -63,3 +63,19 @@ test('bodyText handles odd values', () => {
 test('HTML entities are decoded', () => {
   assert.equal(bodyText('<p>I&#8217;m here &amp; there&nbsp;&hellip; &#x2014; &bogus;</p>'), 'I’m here & there … — &bogus;');
 });
+
+test('title prefix mode: filters on the title and strips the prefix', async () => {
+  const cfg = strapiConfig({ ...env('5'), STRAPI_TITLE_FIELD: 'Title', STRAPI_TITLE_PREFIX: 'Prediction:' });
+  const q = new URL(buildQuery(cfg, 1));
+  assert.equal(q.searchParams.get('filters[Title][$startsWithi]'), 'Prediction:');
+  assert.equal(q.searchParams.get('populate[0]'), null);
+  assert.equal([...q.searchParams.keys()].some(k => k.includes('tags')), false);
+  const page = { data: [
+    { id: 1, documentId: 'a1', Title: 'Prediction: 1033 into law by end of 2027', Content: '<p>Body</p>' },
+    { id: 2, documentId: 'b2', Title: 'prediction:Lower case works', Content: '' },
+    { id: 3, documentId: 'c3', Title: 'Not a Prediction: idea', Content: '' },
+    { id: 4, documentId: 'd4', Title: 'Prediction:', Content: '' },
+  ], meta: { pagination: { pageCount: 1 } } };
+  const ideas = await fetchIdeas(cfg, async () => ({ ok: true, json: async () => page }));
+  assert.deepEqual(ideas.map(i => [i.id, i.title]), [['a1', '1033 into law by end of 2027'], ['b2', 'Lower case works'], ['d4', 'Prediction:']]);
+});

@@ -12,7 +12,8 @@ evidence an editor has approved. Embed it in a post with an iframe:
 
 How a tracker is born and kept up to date:
 
-1. **Idea.** An editor writes a draft post in Strapi and tags it `prediction-idea`.
+1. **Idea.** An editor writes a draft post in Strapi whose title starts with `Prediction:`
+   (or, with the tag settings, tags it).
 2. **Intake** (`.github/workflows/prediction-intake.yml`, daily). Drafts
    `trackers/<slug>/tracker.json` with the AI model and opens a pull request. Review
    the question and resolution criteria there; merging activates the tracker. Ideas
@@ -52,13 +53,16 @@ Repository **variables** (same page → Variables):
 | `STRAPI_VERSION` | no | `4` or `5` (default `5`) |
 | `STRAPI_COLLECTION` | no | REST collection name (default `posts`) |
 | `STRAPI_TAG_FIELD` / `STRAPI_TAG_ATTRIBUTE` | no | Relation holding the tag and its name field (default `tags` / `name`; use e.g. `category` / `slug` for a category) |
+| `STRAPI_TITLE_PREFIX` | no | When set (e.g. `Prediction:`), ideas are posts whose title starts with this text, ignoring case, and the tag settings are not used. The prefix is removed from the title before drafting |
 | `STRAPI_TAG_VALUE` | no | Tag that marks an idea (default `prediction-idea`, case-insensitive) |
 | `STRAPI_TITLE_FIELD` / `STRAPI_BODY_FIELD` | no | Post fields read as the idea (default `title` / `content`) |
 | `STRAPI_ADMIN_URL` / `STRAPI_CONTENT_TYPE` | no | For links to the idea in pull requests (default `STRAPI_URL` / `api::post.post`) |
 
-For the FOSTBeat Strapi (v5) set `STRAPI_TAG_FIELD` = `categories`, `STRAPI_TAG_ATTRIBUTE` = `Title`,
-`STRAPI_TITLE_FIELD` = `Title`, `STRAPI_BODY_FIELD` = `Content`, and `STRAPI_TAG_VALUE` to the
-name of the category that marks ideas (matched without regard to case).
+For the FOSTBeat Strapi (v5) set `STRAPI_TITLE_FIELD` = `Title`, `STRAPI_BODY_FIELD` = `Content`
+and `STRAPI_TITLE_PREFIX` = `Prediction:`, so an idea is any post (draft or published) whose
+title starts with "Prediction:". To mark ideas with a tag instead, leave `STRAPI_TITLE_PREFIX`
+unset, add a `tags` relation from Post to Tag, and set `STRAPI_TAG_FIELD` = `tags`,
+`STRAPI_TAG_ATTRIBUTE` = `Title` and `STRAPI_TAG_VALUE` = `Predictions`.
 
 Also:
 
