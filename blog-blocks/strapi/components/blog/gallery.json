@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_blog_gallerys",
+  "info": {
+    "displayName": "Gallery",
+    "icon": "landscape",
+    "description": "Bento photo gallery with full-screen viewer"
+  },
+  "options": {},
+  "attributes": {
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ],
+      "required": true
+    },
+    "caption": {
+      "type": "string"
+    },
+    "credit": {
+      "type": "string"
+    }
+  }
+}

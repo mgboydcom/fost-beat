@@ -28,6 +28,9 @@ concurrency:
 jobs:
   engine:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prediction-trackers
     timeout-minutes: 45
     env:
       PREDICTION_SPREADSHEET_ID: ${{ vars.PREDICTION_SPREADSHEET_ID }}
@@ -40,6 +43,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: prediction-trackers/package-lock.json
       - run: npm ci
       - name: Run engine
         env:

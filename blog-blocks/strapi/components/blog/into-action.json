@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_blog_into_actions",
+  "info": {
+    "displayName": "Into Action",
+    "icon": "rocket",
+    "description": "Closing 'what to do next' section with numbered steps"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "default": "Into Action"
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "default": "Three places to start"
+    },
+    "intro": {
+      "type": "text"
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "blog.action-item",
+      "min": 1
+    }
+  }
+}
