@@ -17,7 +17,7 @@ SETUP_NOTE = """## Data centre moratorium tracker (Gemini) — setup
 4. **Email digest**: connect Gmail.
 5. Click **Execute workflow** once to test, then toggle the workflow **Active**.
 
-Runs every 2 days at 07:00 Madrid time and searches the last 48 hours. Headlines go to Gemini one at a time (about 10 a minute) to stay inside the free tier's rate limit, so a full run takes up to ~7 minutes.
+Runs every 2 days at 07:00 Madrid time and searches the last 72 hours (stories already in the sheet are skipped). Headlines go to Gemini one at a time (about 10 a minute) to stay inside the free tier's rate limit, so a full run takes up to ~7 minutes.
 Rows already in the sheet are never added again, even after moving to a new n8n account.
 
 An email is sent after every run with a run report (headlines found, sent to Gemini, Gemini errors). To catch up after a gap, set `lookbackHours` in Config to e.g. 504 (21 days) and raise `maxItemsPerRun`, run once, then set them back."""
@@ -44,7 +44,7 @@ SYSTEM_PROMPT = (
 CONFIG_CODE = """return [{ json: {
   // ---- EDIT THESE ----
   notifyEmail: 'CHANGE-ME@example.com', // replace with the address that should get the digest
-  lookbackHours: 48,          // how far back to search. For a one-off catch-up run set e.g. 504 (21 days), then set back to 48
+  lookbackHours: 72,          // how far back to search (runs are 48h apart; the overlap catches late-listed stories). For a one-off catch-up run set e.g. 504 (21 days), then set back to 72
   maxItemsPerRun: 60,         // cap on items sent to Gemini per run (stays well inside free-tier daily limits)
   confidenceThreshold: 0.6,   // minimum classifier confidence to log an action
   model: 'gemini-flash-latest', // any Gemini model name from Google AI Studio

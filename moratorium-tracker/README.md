@@ -63,7 +63,8 @@ To refresh right away: **Actions → Update map locations → Run workflow**.
 Runs every 2 days at 07:00 Europe/Madrid:
 
 1. Searches Google News RSS in 13 languages and markets, plus GDELT, for moratorium, ban,
-   pause or freeze stories from the last `lookbackHours` (48 by default).
+   pause or freeze stories from the last `lookbackHours` (72 by default; runs are 48 hours apart, and the overlap
+   catches stories Google News lists late).
 2. Reads the sheet and skips stories whose link or headline is already there, and actions
    already logged for the same place in the last 30 days.
 3. Sends each remaining headline to Gemini (at most 60 per run, about 10 a minute to stay
@@ -74,10 +75,10 @@ Runs every 2 days at 07:00 Europe/Madrid:
    sent to Gemini, and how many Gemini errors there were (with the first error message). An
    email saying "Gemini errors, nothing logged" usually means a wrong key or model name.
 
-**Catching up after a gap:** a scheduled run only sees the last 48 hours. To pick up older
+**Catching up after a gap:** a scheduled run only sees the last 72 hours. To pick up older
 stories, set `lookbackHours` in the Config node to cover the gap (for example `504` for 21
 days) and raise `maxItemsPerRun` (for example `200`), run the workflow once by hand, then set
-both back to `48` and `60`. Rows already in the sheet are skipped, so overlapping is safe.
+them back to `72` and `60`. Rows already in the sheet are skipped, so overlapping is safe.
 
 The workflow file has no keys or passwords. The digest address is a placeholder,
 `CHANGE-ME@example.com`, because this repo is public; set the real one in the **Config** node
