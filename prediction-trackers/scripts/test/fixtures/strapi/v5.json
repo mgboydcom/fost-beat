@@ -1,0 +1,12 @@
+{
+  "data": [
+    { "id": 101, "documentId": "abc123xyz", "title": "1033 into law by end of 2027", "publishedAt": null, "updatedAt": "2026-11-10T09:00:00.000Z",
+      "content": [ { "type": "paragraph", "children": [ { "type": "text", "text": "Will Section 1033 " }, { "type": "text", "text": "become law?", "bold": true } ] },
+                   { "type": "paragraph", "children": [ { "type": "text", "text": "Second paragraph." } ] } ],
+      "tags": [ { "id": 3, "documentId": "t1", "name": "prediction-idea" } ] },
+    { "id": 102, "documentId": "abc123xyz", "title": "1033 into law by end of 2027", "publishedAt": null, "updatedAt": "2026-11-10T09:00:00.000Z",
+      "content": [], "tags": [ { "id": 3, "documentId": "t1", "name": "prediction-idea" } ] },
+    { "id": 103, "documentId": "def456", "title": "Other", "content": "", "tags": [] }
+  ],
+  "meta": { "pagination": { "page": 1, "pageSize": 100, "pageCount": 1, "total": 3 } }
+}

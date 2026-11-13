@@ -1,0 +1,25 @@
+{
+  "slug": "example-act-2027",
+  "title": "Example Act passed by 2027",
+  "status": "active",
+  "strapi": { "id": "42", "title": "Example idea" },
+  "question": "Will the (fictional) Example Act be signed into law by 31 December 2027?",
+  "deadline": "2027-12-31",
+  "resolution": {
+    "yes": "The Example Act is signed into law on or before 31 December 2027.",
+    "no": "The Example Act has not been signed into law by the end of 31 December 2027.",
+    "source": "The official legislative record"
+  },
+  "base_rate": { "p": 0.2, "reasoning": "Test fixture: an arbitrary starting point for tests." },
+  "signals": [
+    { "type": "bill_introduced", "label": "Bill introduced", "weight": 0.3 },
+    { "type": "committee_vote", "label": "Committee vote", "weight": 0.8 },
+    { "type": "public_statement", "label": "Public statement", "weight": 0.1 }
+  ],
+  "actors": [
+    { "name": "Example Committee", "role": "Committee", "stance": 1, "influence": 5 },
+    { "name": "Example Lobby", "role": "Trade group", "stance": -2, "influence": 3 }
+  ],
+  "sources": [ { "name": "Legislative record", "url": "https://example.org/record" } ],
+  "queries": [ "Example Act" ]
+}

@@ -5,7 +5,9 @@ from the `main` branch. Each project lives in its own folder.
 
 | Folder | What it is |
 |---|---|
+| [`prediction-trackers/`](prediction-trackers/) | Prediction trackers: AI-assisted evidence gathering from Strapi ideas, editor review in Google Sheets, and an embeddable probability page |
 | [`moratorium-tracker/`](moratorium-tracker/) | Data centre moratorium tracker: live Leaflet map for the blog, hourly location lookups, and the n8n workflow that fills the tracker sheet |
+
 ## Blog block generator
 
 `blog-blocks/` is a fill-in-the-fields generator for the FOSTBeat article blocks (Into Action,

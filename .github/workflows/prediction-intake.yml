@@ -1,0 +1,60 @@
+name: Prediction tracker intake
+
+# Once a day: finds Strapi posts (drafts included) tagged as prediction ideas
+# and opens a pull request with a drafted tracker for each new one. Also
+# records ideas whose pull request was closed without merging.
+on:
+  schedule:
+    - cron: '7 6 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Only show what would happen
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: prediction-intake
+  cancel-in-progress: false
+
+jobs:
+  intake:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prediction-trackers
+    timeout-minutes: 30
+    env:
+      STRAPI_URL: ${{ vars.STRAPI_URL }}
+      STRAPI_VERSION: ${{ vars.STRAPI_VERSION }}
+      STRAPI_COLLECTION: ${{ vars.STRAPI_COLLECTION }}
+      STRAPI_TAG_FIELD: ${{ vars.STRAPI_TAG_FIELD }}
+      STRAPI_TAG_ATTRIBUTE: ${{ vars.STRAPI_TAG_ATTRIBUTE }}
+      STRAPI_TAG_VALUE: ${{ vars.STRAPI_TAG_VALUE }}
+      STRAPI_TITLE_FIELD: ${{ vars.STRAPI_TITLE_FIELD }}
+      STRAPI_BODY_FIELD: ${{ vars.STRAPI_BODY_FIELD }}
+      STRAPI_ADMIN_URL: ${{ vars.STRAPI_ADMIN_URL }}
+      STRAPI_CONTENT_TYPE: ${{ vars.STRAPI_CONTENT_TYPE }}
+      STRAPI_TOKEN: ${{ secrets.STRAPI_TOKEN }}
+      PREDICTION_MODEL: ${{ vars.PREDICTION_MODEL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+      BASE_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: prediction-trackers/package-lock.json
+      - run: npm ci
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+      - run: node scripts/prediction-intake.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
