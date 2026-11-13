@@ -75,10 +75,15 @@ Runs every 2 days at 07:00 Europe/Madrid:
    sent to Gemini, and how many Gemini errors there were (with the first error message). An
    email saying "Gemini errors, nothing logged" usually means a wrong key or model name.
 
-**Catching up after a gap:** a scheduled run only sees the last 72 hours. To pick up older
-stories, set `lookbackHours` in the Config node to cover the gap (for example `504` for 21
-days) and raise `maxItemsPerRun` (for example `200`), run the workflow once by hand, then set
-them back to `72` and `60`. Rows already in the sheet are skipped, so overlapping is safe.
+**Catching up after a gap:** a scheduled run only sees the last 72 hours. To fill a gap, keep
+the workflow **inactive** and run it by hand once per week of the gap, with `fromDate` and
+`toDate` in the Config node set to that week (`YYYY-MM-DD`; leave `toDate` empty for "until
+now"). If the run report says some headlines were not checked because `maxItemsPerRun` was
+reached, rerun that week as two shorter ranges. Rows already in the sheet are skipped, so
+overlapping ranges are safe. Clear both dates before activating the workflow.
+
+Gemini calls give up after 30 seconds and are retried once. A headline only counts as seen once
+Gemini has answered for it, so headlines that hit an error are tried again on the next run.
 
 The workflow file has no keys or passwords. The digest address is a placeholder,
 `CHANGE-ME@example.com`, because this repo is public; set the real one in the **Config** node
@@ -144,5 +149,5 @@ Re-import the file in n8n afterwards; credentials have to be reconnected on impo
 
 - The Gemini workflow has not yet run against the real Gemini API.
 - No rows have been added since 23 Oct 2026 (including the 8 Nov 2026 US ballot results).
-  Run one catch-up run (see above) once the workflow works in the new n8n account.
+  Catch-up planned in three batches: 23–29 Oct, 30 Oct–5 Nov, 6 Nov–now.
 - Sheet link sharing should be **Viewer**, not Editor.

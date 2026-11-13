@@ -20,7 +20,7 @@ SETUP_NOTE = """## Data centre moratorium tracker (Gemini) — setup
 Runs every 2 days at 07:00 Madrid time and searches the last 72 hours (stories already in the sheet are skipped). Headlines go to Gemini one at a time (about 10 a minute) to stay inside the free tier's rate limit, so a full run takes up to ~7 minutes.
 Rows already in the sheet are never added again, even after moving to a new n8n account.
 
-An email is sent after every run with a run report (headlines found, sent to Gemini, Gemini errors). To catch up after a gap, set `lookbackHours` in Config to e.g. 504 (21 days) and raise `maxItemsPerRun`, run once, then set them back."""
+An email is sent after every run with a run report (headlines found, sent to Gemini, Gemini errors).\n\n**Catching up after a gap:** keep the workflow inactive, set `fromDate` and `toDate` in Config to one week, run it by hand, and repeat for the next week. Clear both dates before activating."""
 
 SYSTEM_PROMPT = (
     "You classify news items for a tracker of government actions that restrict new data centre construction anywhere in the world.\n\n"
@@ -41,16 +41,41 @@ SYSTEM_PROMPT = (
     "If the item is not in English, write every field in English. If is_moratorium_action is false, the other fields can be empty strings or null."
 )
 
-CONFIG_CODE = """return [{ json: {
+CONFIG_CODE = """const cfg = {
   // ---- EDIT THESE ----
   notifyEmail: 'CHANGE-ME@example.com', // replace with the address that should get the digest
-  lookbackHours: 72,          // how far back to search (runs are 48h apart; the overlap catches late-listed stories). For a one-off catch-up run set e.g. 504 (21 days), then set back to 72
+  lookbackHours: 72,          // normal runs: how far back to search (runs are 48h apart; the overlap catches late-listed stories)
+  fromDate: '',               // catch-up batches only: first day to search, 'YYYY-MM-DD'. Leave '' for normal runs
+  toDate: '',                 // catch-up batches only: last day to search, 'YYYY-MM-DD'. Leave '' for normal runs
   maxItemsPerRun: 60,         // cap on items sent to Gemini per run (stays well inside free-tier daily limits)
   confidenceThreshold: 0.6,   // minimum classifier confidence to log an action
   model: 'gemini-flash-latest', // any Gemini model name from Google AI Studio
   // --------------------
   systemPrompt: %s
-} }];""" % json.dumps(SYSTEM_PROMPT)
+};
+
+// Search window: a fixed date range for catch-up batches, otherwise the last lookbackHours
+const DAY = 24 * 3600 * 1000;
+const ymd = d => d.toISOString().slice(0, 10);
+const stamp = d => d.toISOString().replace(/[-:T]/g, '').slice(0, 14);
+let start, end, newsOperator;
+if (cfg.fromDate) {
+  start = new Date(cfg.fromDate + 'T00:00:00Z');
+  end = cfg.toDate ? new Date(new Date(cfg.toDate + 'T00:00:00Z').getTime() + DAY) : new Date();
+  if (isNaN(start) || isNaN(end) || start >= end) throw new Error('fromDate/toDate must be YYYY-MM-DD, with fromDate on or before toDate');
+  newsOperator = ' after:' + ymd(new Date(start.getTime() - DAY)) + ' before:' + ymd(end);
+} else {
+  end = new Date();
+  start = new Date(end.getTime() - cfg.lookbackHours * 3600 * 1000);
+  newsOperator = ' when:' + Math.max(1, Math.ceil(cfg.lookbackHours / 24)) + 'd';
+}
+cfg.windowStart = start.toISOString();
+cfg.windowEnd = end.toISOString();
+cfg.windowLabel = cfg.fromDate ? `${ymd(start)} to ${ymd(new Date(end.getTime() - 1))}` : `the last ${cfg.lookbackHours} hours`;
+cfg.newsOperator = newsOperator;
+cfg.gdeltStart = stamp(start);
+cfg.gdeltEnd = stamp(end);
+return [{ json: cfg }];""" % json.dumps(SYSTEM_PROMPT)
 
 FEEDS_CODE = r"""// One Google News RSS search per language/market. Add or remove rows freely.
 const feeds = [
@@ -69,11 +94,11 @@ const feeds = [
   { lang: 'ja',    hl: 'ja',    gl: 'JP', ceid: 'JP:ja', q: 'データセンター (モラトリアム OR 凍結 OR 禁止 OR 停止)' },
 ];
 
-const days = Math.max(1, Math.ceil($('Config').first().json.lookbackHours / 24));
+const op = $('Config').first().json.newsOperator;
 return feeds.map(f => ({
   json: {
     lang: f.lang,
-    url: `https://news.google.com/rss/search?q=${encodeURIComponent(f.q + ' when:' + days + 'd')}&hl=${f.hl}&gl=${f.gl}&ceid=${f.ceid}`
+    url: `https://news.google.com/rss/search?q=${encodeURIComponent(f.q + op)}&hl=${f.hl}&gl=${f.gl}&ceid=${f.ceid}`
   }
 }));"""
 
@@ -112,9 +137,13 @@ let items = [
   })),
 ];
 
-// Recency filter
-const cutoff = Date.now() - cfg.lookbackHours * 3600 * 1000;
-items = items.filter(i => !i.published || new Date(i.published).getTime() >= cutoff);
+// Keep only items inside the search window
+const wStart = new Date(cfg.windowStart).getTime(), wEnd = new Date(cfg.windowEnd).getTime();
+items = items.filter(i => {
+  if (!i.published) return true;
+  const t = new Date(i.published).getTime();
+  return isNaN(t) || (t >= wStart && t < wEnd);
+});
 
 // Google News titles end in " - Source name"; strip it so the same story from two feeds matches
 const normTitle = t => (t || '')
@@ -145,10 +174,11 @@ for (const i of items) {
   fresh.push(i);
 }
 
+// Oldest first, so a capped run handles the start of the window and a re-run continues from there
+fresh.sort((a, b) => String(a.published || '9').localeCompare(String(b.published || '9')));
 const limited = fresh.slice(0, cfg.maxItemsPerRun);
-for (const i of limited) sd.seenTitles[normTitle(i.title)] = Date.now();
-
-return limited.map(j => ({ json: j }));"""
+// Items are marked as seen in "Parse & classify", only once Gemini has answered for them
+return limited.map(j => ({ json: { ...j, _newTotal: fresh.length } }));"""
 
 GEMINI_BODY = (
     "={{ JSON.stringify({"
@@ -184,7 +214,14 @@ const highTypes = ['adopted', 'ban', 'extended'];
 const highLevels = ['national', 'state', 'region', 'grid_operator'];
 const month = new Date().toISOString().slice(0, 7);
 const out = [];
-const stats = { sent: originals.length, geminiErrors: 0, firstError: '', unreadable: 0,
+const normTitle = t => (t || '')
+  .toLowerCase()
+  .replace(/\s+-\s+[^-]+$/, '')
+  .replace(/[^\p{L}\p{N} ]/gu, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+const newTotal = (originals[0] && originals[0].json._newTotal) || 0;
+const stats = { newTotal, sent: originals.length, geminiErrors: 0, firstError: '', unreadable: 0,
   notAction: 0, lowConfidence: 0, alreadyLogged: 0 };
 
 responses.forEach((r, idx) => {
@@ -200,6 +237,8 @@ responses.forEach((r, idx) => {
     r.json.candidates[0].content && r.json.candidates[0].content.parts) || [];
   let text = parts.filter(p => p && p.text && !p.thought).map(p => p.text).join('');
   text = text.replace(/```json|```/g, '').trim();
+  sd.seenTitles = sd.seenTitles || {};
+  if (text) sd.seenTitles[normTitle(orig.title)] = Date.now(); // Gemini answered: don't send it again
   let c;
   try { c = JSON.parse(text); } catch (e) { stats.unreadable++; return; }
   if (Array.isArray(c)) c = c[0];
@@ -237,7 +276,7 @@ const rssCount = $('Read news feeds').all().filter(i => i.json && i.json.title).
 const g = $('GDELT search').first();
 const gdeltCount = (g && g.json && g.json.articles && g.json.articles.length) || 0;
 out.push({ json: { _report: true, fetched: rssCount + gdeltCount, logged: out.length,
-  lookbackHours: cfg.lookbackHours, ...stats } });
+  windowLabel: cfg.windowLabel, ...stats } });
 return out;"""
 
 ROWS_ONLY_CODE = r"""// Passes on only the new sheet rows (drops the run report).
@@ -247,10 +286,9 @@ DIGEST_CODE = r"""// Builds one email per run: new actions logged to the sheet, 
 const all = $input.all().map(i => i.json);
 const rep = all.find(r => r._report) || {};
 const rows = all.filter(r => !r._report);
-const days = Math.round((rep.lookbackHours || 0) / 24 * 10) / 10;
 const report = `
-  <p style="font-family:sans-serif;font-size:12px;color:#555;">Run report: searched the last ${days} day(s);
-  ${rep.fetched || 0} headlines found; ${rep.sent || 0} new ones sent to Gemini;
+  <p style="font-family:sans-serif;font-size:12px;color:#555;">Run report: searched ${rep.windowLabel || ''};
+  ${rep.fetched || 0} headlines found; ${rep.newTotal || 0} new, of which ${rep.sent || 0} sent to Gemini${(rep.newTotal || 0) > (rep.sent || 0) ? ' (<b>' + (rep.newTotal - rep.sent) + ' not checked</b>: maxItemsPerRun reached; for a catch-up batch, rerun with a shorter date range)' : ''};
   ${rep.notAction || 0} not a moratorium action; ${rep.lowConfidence || 0} below the confidence threshold;
   ${rep.alreadyLogged || 0} already in the sheet; ${rep.unreadable || 0} unreadable replies;
   <b>${rep.geminiErrors || 0} Gemini errors</b>${rep.firstError ? ' (first: ' + String(rep.firstError).replace(/</g, '&lt;') + ')' : ''}.</p>`;
@@ -310,7 +348,8 @@ nodes = [
             {"name": "mode", "value": "artlist"},
             {"name": "format", "value": "json"},
             {"name": "maxrecords", "value": "100"},
-            {"name": "timespan", "value": "={{ Math.max(1, Math.ceil($('Config').first().json.lookbackHours / 24)) }}d"},
+            {"name": "startdatetime", "value": "={{ $('Config').first().json.gdeltStart }}"},
+            {"name": "enddatetime", "value": "={{ $('Config').first().json.gdeltEnd }}"},
             {"name": "sort", "value": "datedesc"}]},
         "options": {"response": {"response": {"responseFormat": "json"}}, "timeout": 30000}},
      "id": nid(), "name": "GDELT search", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [880, 0],
@@ -328,9 +367,9 @@ nodes = [
         "sendBody": True,
         "specifyBody": "json",
         "jsonBody": GEMINI_BODY,
-        "options": {"batching": {"batch": {"batchSize": 1, "batchInterval": 6000}}, "timeout": 60000}},
+        "options": {"batching": {"batch": {"batchSize": 1, "batchInterval": 6000}}, "timeout": 30000}},
      "id": nid(), "name": "Classify with Gemini", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [1540, 0],
-     "retryOnFail": True, "maxTries": 3, "waitBetweenTries": 5000,
+     "retryOnFail": True, "maxTries": 2, "waitBetweenTries": 5000,
      "onError": "continueRegularOutput", "alwaysOutputData": True},
     {"parameters": {"jsCode": PARSE_CODE},
      "id": nid(), "name": "Parse & classify", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1760, 0]},
