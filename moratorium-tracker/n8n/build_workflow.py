@@ -11,13 +11,13 @@ def nid():
 
 SETUP_NOTE = """## Data centre moratorium tracker (Gemini) — setup
 
-1. **Config** node: replace `CHANGE-ME@example.com` with the address that should get the daily digest. `model` is the Gemini model; if the test run says the model isn't found, copy a current model name from Google AI Studio.
+1. **Config** node: replace `CHANGE-ME@example.com` with the address that should get the digest. `model` is the Gemini model; if the test run says the model isn't found, copy a current model name from Google AI Studio.
 2. **Classify with Gemini**: create a *Header Auth* credential. Name: `x-goog-api-key`, Value: your Gemini API key (aistudio.google.com → Get API key).
 3. **Read existing rows** and **Log to Google Sheet**: connect your Google account (same credential for both). The sheet is already set.
 4. **Email digest**: connect Gmail.
 5. Click **Execute workflow** once to test, then toggle the workflow **Active**.
 
-Runs daily at 07:00 Madrid time. Headlines go to Gemini one at a time (about 10 a minute) to stay inside the free tier's rate limit, so a full run takes up to ~7 minutes.
+Runs every 2 days at 07:00 Madrid time and searches the last 48 hours. Headlines go to Gemini one at a time (about 10 a minute) to stay inside the free tier's rate limit, so a full run takes up to ~7 minutes.
 Rows already in the sheet are never added again, even after moving to a new n8n account.
 
 An email is sent after every run with a run report (headlines found, sent to Gemini, Gemini errors). To catch up after a gap, set `lookbackHours` in Config to e.g. 504 (21 days) and raise `maxItemsPerRun`, run once, then set them back."""
@@ -43,7 +43,7 @@ SYSTEM_PROMPT = (
 
 CONFIG_CODE = """return [{ json: {
   // ---- EDIT THESE ----
-  notifyEmail: 'CHANGE-ME@example.com', // replace with the address that should get the daily digest
+  notifyEmail: 'CHANGE-ME@example.com', // replace with the address that should get the digest
   lookbackHours: 48,          // how far back to search. For a one-off catch-up run set e.g. 504 (21 days), then set back to 48
   maxItemsPerRun: 60,         // cap on items sent to Gemini per run (stays well inside free-tier daily limits)
   confidenceThreshold: 0.6,   // minimum classifier confidence to log an action
@@ -293,8 +293,8 @@ sheet_tab = {"__rl": True, "mode": "name", "value": "Moratoriums"}
 nodes = [
     {"parameters": {"content": SETUP_NOTE, "height": 480, "width": 560, "color": 6},
      "id": nid(), "name": "Setup notes", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [-60, -580]},
-    {"parameters": {"rule": {"interval": [{"field": "days", "daysInterval": 1, "triggerAtHour": 7, "triggerAtMinute": 0}]}},
-     "id": nid(), "name": "Daily 07:00", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0]},
+    {"parameters": {"rule": {"interval": [{"field": "days", "daysInterval": 2, "triggerAtHour": 7, "triggerAtMinute": 0}]}},
+     "id": nid(), "name": "Every 2 days 07:00", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 0]},
     {"parameters": {"jsCode": CONFIG_CODE},
      "id": nid(), "name": "Config", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [220, 0]},
     {"parameters": {"jsCode": FEEDS_CODE},
@@ -346,7 +346,7 @@ nodes = [
      "id": nid(), "name": "Email digest", "type": "n8n-nodes-base.gmail", "typeVersion": 2.1, "position": [2200, 140]},
 ]
 
-chain = ["Daily 07:00", "Config", "Build feed list", "Read news feeds", "GDELT search", "Read existing rows",
+chain = ["Every 2 days 07:00", "Config", "Build feed list", "Read news feeds", "GDELT search", "Read existing rows",
          "Normalise & dedupe", "Classify with Gemini", "Parse & classify"]
 connections = {a: {"main": [[{"node": b, "type": "main", "index": 0}]]} for a, b in zip(chain, chain[1:])}
 # Parse & classify feeds two branches: new rows go to the sheet; the digest always gets everything

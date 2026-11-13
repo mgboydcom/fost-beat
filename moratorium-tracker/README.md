@@ -4,7 +4,7 @@ Tracks government actions that pause or ban new data centres, and shows them on 
 [FOSTBeat blog post](https://beat.joinfost.io/blog/data-center-moratorium-tracker).
 
 ```
-n8n workflow (daily) ──> Google Sheet ──> map page (reads the sheet live)
+n8n workflow (2-day) ──> Google Sheet ──> map page (reads the sheet live)
                               │
                               └──> GitHub Action (hourly) ──> geocache.json
 ```
@@ -60,7 +60,7 @@ To refresh right away: **Actions → Update map locations → Run workflow**.
 
 ## n8n workflow
 
-Runs daily at 07:00 Europe/Madrid:
+Runs every 2 days at 07:00 Europe/Madrid:
 
 1. Searches Google News RSS in 13 languages and markets, plus GDELT, for moratorium, ban,
    pause or freeze stories from the last `lookbackHours` (48 by default).
@@ -74,7 +74,7 @@ Runs daily at 07:00 Europe/Madrid:
    sent to Gemini, and how many Gemini errors there were (with the first error message). An
    email saying "Gemini errors, nothing logged" usually means a wrong key or model name.
 
-**Catching up after a gap:** a daily run only sees the last 48 hours. To pick up older
+**Catching up after a gap:** a scheduled run only sees the last 48 hours. To pick up older
 stories, set `lookbackHours` in the Config node to cover the gap (for example `504` for 21
 days) and raise `maxItemsPerRun` (for example `200`), run the workflow once by hand, then set
 both back to `48` and `60`. Rows already in the sheet are skipped, so overlapping is safe.
