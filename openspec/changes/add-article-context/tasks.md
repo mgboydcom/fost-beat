@@ -19,5 +19,5 @@
 ## Workflow follow-up
 
 - Merge to `main` so GitHub Pages serves it before the `fostbeat-me` icon change ships.
-- Propose the companion change in `platformable/fostbeat-me` (blocks icon on planning rows and In edit cards; updates to `article-planning`, `content-pipeline` and `design-system-usage`).
+- Propose the companion change in `platformable/FOSTBeat-me` (blocks icon on planning rows and In edit cards; updates to `article-planning`, `content-pipeline` and `design-system-usage`).
 - Archive this change once it is live.

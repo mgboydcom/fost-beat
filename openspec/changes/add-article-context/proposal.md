@@ -2,7 +2,7 @@
 
 ## Why
 
-The ME builds blog blocks for one article at a time, then pastes them into that article in Strapi. Today the generator has no idea which article it is working on. Its drafts are shared by every article, so article A's Quote comes back when working on article B, and finding the article in Strapi is a separate search. The ME dashboard (`platformable/fostbeat-me`) is adding a blocks icon to each article. That icon needs a generator page that takes the article from the link.
+The ME builds blog blocks for one article at a time, then pastes them into that article in Strapi. Today the generator has no idea which article it is working on. Its drafts are shared by every article, so article A's Quote comes back when working on article B, and finding the article in Strapi is a separate search. The ME dashboard (`platformable/FOSTBeat-me`) is adding a blocks icon to each article. That icon needs a generator page that takes the article from the link.
 
 ## What Changes
 
@@ -27,4 +27,4 @@ None. The project has no specs yet.
 - `blog-blocks/README.md`: documents the `doc` and `title` parameters and the per-article drafts.
 - `blocks.js`, `styles.js` and the generated HTML are unchanged. Snippets copied before and after this change are identical for the same field values.
 - Browser storage gains keys `fbb-gen:draft:<doc>:<type>`. Existing `fbb-gen:draft:<type>` keys stay in use when there is no article.
-- Companion change in `platformable/fostbeat-me`: a blocks icon on article planning rows and In edit cards opens `…/blog-blocks/?doc=<id>&title=<title>` in a tab named `fbb-<id>`. This change ships first, because the icon is only useful once the generator reads the parameters.
+- Companion change in `platformable/FOSTBeat-me`: a blocks icon on article planning rows and In edit cards opens `…/blog-blocks/?doc=<id>&title=<title>` in a tab named `fbb-<id>`. This change ships first, because the icon is only useful once the generator reads the parameters.
