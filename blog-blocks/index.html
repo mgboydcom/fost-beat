@@ -82,6 +82,10 @@ dialog p{margin:0 0 10px;color:var(--muted);font-size:14px}
 dialog textarea{min-height:200px;font-family:var(--f-mono);font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:14px;font-weight:500;padding:10px 18px;border-radius:999px;z-index:60}
 .hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.article{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:18px 0 0;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font-size:14px}
+.article[hidden]{display:none}
+.article b{overflow-wrap:anywhere}
+a.btn{text-decoration:none}
 </style>
 </head>
 <body>
@@ -90,6 +94,11 @@ dialog textarea{min-height:200px;font-family:var(--f-mono);font-size:12px}
     <h1>FOSTBeat <span>block generator</span></h1>
     <p>Pick a block, fill in the fields, then copy the HTML and paste it into the article body in Strapi. Each snippet carries its own scoped styles and works in light and dark mode.</p>
   </header>
+
+  <p class="article" id="article" hidden>
+    <span>Adding blocks for: <b id="article-title"></b></span>
+    <a class="btn ghost small" id="article-link" target="_blank" rel="noopener noreferrer">Open this article in Strapi ↗</a>
+  </p>
 
   <nav class="picker" id="picker" aria-label="Block type"></nav>
 
@@ -154,6 +163,27 @@ const store = {
   set(k, v) { try { localStorage.setItem("fbb-gen:" + k, JSON.stringify(v)); } catch {} },
 };
 
+/* ---------- article context (?doc=<Strapi document id>&title=<article title>) */
+// The Strapi link is always built from this fixed address and the document id. An address in the
+// query string is never used: the page is public, so a crafted link must not be able to send the ME elsewhere.
+const STRAPI_ADMIN_POST = "https://fost-media-backend.platformable.com/admin/content-manager/collection-types/api::post.post/";
+const article = (() => {
+  const q = new URLSearchParams(location.search);
+  const doc = q.get("doc") || "";
+  if (!/^[A-Za-z0-9]{1,64}$/.test(doc)) return null;
+  let title = (q.get("title") || "").trim();
+  if (title.length > 200) title = title.slice(0, 199) + "…";
+  return { doc, title: title || "Untitled article" };
+})();
+if (article) {
+  $("#article-title").textContent = article.title;
+  $("#article-link").href = STRAPI_ADMIN_POST + encodeURIComponent(article.doc);
+  $("#article").hidden = false;
+  document.title = "Blocks: " + article.title;
+}
+// Drafts are kept per article; with no article they use the original keys, so older drafts still load.
+const draftKey = type => "draft:" + (article ? article.doc + ":" : "") + type;
+
 const SCRIPT_HELP = {
   "office-hours": "Adds “Next: Fri 20 Nov” and the reader's local time. Calendar links work without it.",
   gallery: "Adds the full-screen photo viewer. Without it, each photo opens full size in a new tab.",
@@ -175,7 +205,7 @@ BLOCKS.forEach(b => {
 
 function select(b, preset) {
   block = b; store.set("last", b.type); blockId = uid();
-  data = preset || store.get("draft:" + b.type) || defaults(b);
+  data = preset || store.get(draftKey(b.type)) || defaults(b);
   picker.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.type === b.type)));
   $("#form-title").textContent = b.name;
   $("#form-blurb").textContent = b.blurb + "  Strapi component: " + b.strapi;
@@ -265,7 +295,7 @@ ${snippet}
 }
 
 function update() {
-  store.set("draft:" + block.type, data);
+  store.set(draftKey(block.type), data);
   const scripts = $("#scripts").checked && !!SCRIPT_HELP[block.type];
   html = render(block, data, { scripts, id: blockId });
   $("#code").textContent = html;

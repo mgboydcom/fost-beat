@@ -25,6 +25,24 @@ snippet is built to work with no script:
 Each snippet carries its own scoped `fbb-` styles and follows the site's dark mode
 (`<html data-theme="dark">` or a `.dark` parent).
 
+## Working on one article
+
+The ME dashboard opens the generator for one article with two parameters:
+
+```
+https://mgboydcom.github.io/fost-beat/blog-blocks/?doc=idblixhmvqjmxduwijctx5ee&title=Beyond%20Bolt-On%20AI
+```
+
+- `doc` is the post's Strapi document id (1 to 64 letters or digits; anything else is ignored).
+- `title` is only shown on the page: "Adding blocks for: <title>". It is never stored.
+
+With an article, **Open this article in Strapi** goes to that post's edit screen in the Strapi
+admin, ready for pasting. The link is built from the Strapi admin address fixed in `index.html`
+(`STRAPI_ADMIN_POST`) and the document id; an address in the query string is never used.
+
+Drafts are kept per article: an article opened for the first time starts empty, and opening it
+again brings back its fields. Without `doc`, the generator uses the drafts it always has.
+
 ## Editing a block later
 
 The first line of every snippet is a comment holding the field values
