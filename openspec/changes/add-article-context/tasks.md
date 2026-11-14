@@ -2,7 +2,7 @@
 
 ## 1. Confirm the Strapi admin address
 
-- [ ] 1.1 Open any post in the FOSTBeat Strapi admin and confirm its edit address has the form `…/admin/content-manager/collection-types/api::post.post/<documentId>`. Update `STRAPI_ADMIN_POST` in design.md if it differs, and verify by opening the confirmed address with a real document id.
+- [x] 1.1 Open any post in the FOSTBeat Strapi admin and confirm its edit address has the form `…/admin/content-manager/collection-types/api::post.post/<documentId>`. Update `STRAPI_ADMIN_POST` in design.md if it differs, and verify by opening the confirmed address with a real document id.
 
 ## 2. Article context in the generator
 
