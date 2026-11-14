@@ -230,7 +230,7 @@ responses.forEach((r, idx) => {
   if (r.json && r.json.error) {
     stats.geminiErrors++;
     const e = r.json.error;
-    if (!stats.firstError) stats.firstError = String((e && (e.message || e.description)) || JSON.stringify(e)).slice(0, 300);
+    if (!stats.firstError) stats.firstError = String((e && [e.code, e.status, e.message || e.description].filter(Boolean).join(' ')) || JSON.stringify(e)).slice(0, 400);
     return;
   }
   const parts = (r.json && r.json.candidates && r.json.candidates[0] &&
@@ -367,7 +367,9 @@ nodes = [
         "sendBody": True,
         "specifyBody": "json",
         "jsonBody": GEMINI_BODY,
-        "options": {"batching": {"batch": {"batchSize": 1, "batchInterval": 6000}}, "timeout": 30000}},
+        "options": {"batching": {"batch": {"batchSize": 1, "batchInterval": 6000}}, "timeout": 30000,
+                    # keep Google's own error body (e.g. quota name and limit) instead of n8n's generic message
+                    "response": {"response": {"neverError": True, "responseFormat": "json"}}}},
      "id": nid(), "name": "Classify with Gemini", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [1540, 0],
      "retryOnFail": True, "maxTries": 2, "waitBetweenTries": 5000,
      "onError": "continueRegularOutput", "alwaysOutputData": True},
