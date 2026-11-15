@@ -7,85 +7,145 @@
 <!--
   FOSTBeat prediction tracker embed. Shows one tracker, chosen with ?t=<slug>,
   from trackers/<slug>/data.json (written by scripts/prediction-engine.mjs).
+  Styled with the FOSTBeat design system: Outfit for headlines, Inter for text,
+  navy ink, orange accents, peach washes, pill labels and soft shadows.
 
   Embed in a post with an iframe (the blog does not run <script> tags in posts):
     <iframe src="https://mgboydcom.github.io/fost-beat/prediction-trackers/prediction.html?t=<slug>"
-            title="Prediction tracker" style="width:100%;height:1200px;border:0" loading="lazy"></iframe>
+            title="Prediction tracker" style="width:100%;height:1600px;border:0" loading="lazy"></iframe>
 -->
 <style>
+  @font-face { font-family: "Outfit"; src: url("fonts/Outfit-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+  @font-face { font-family: "Inter"; src: url("fonts/Inter-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+  /* FOSTBeat tokens (design system, light site theme) */
   :root {
-    --ink: #1d2433; --muted: #5b6475; --line: #dde1e8; --bg: #ffffff; --panel: #f6f7f9;
-    --accent: #2563eb; --yes: #2e7d4f; --no: #b3261e; --grid: #e9ecf1;
+    --geranium: #dd312a; --orange: #fc6200; --orange-ink: #b74413;
+    --navy: #111525; --text: #252525; --text-meta: #5a5a5a; --white: #ffffff; --card: #fcfcfa;
+    --wash-50: #fff4ee; --wash-100: #ffeee5; --chip: #ffe9dc; --tag-orange-bg: #ffe7dd;
+    --teal-bg: #dcf1ed; --teal-ink: #156d61; --slate-bg: #e6e9ef; --slate-ink: #3b4560;
+    --rule: #f1e3da; --grid: #f3e1d6;
+    --shadow-card: 0 20px 30px rgba(191, 191, 191, 0.30);
+    --shadow-soft: 0 10px 20px rgba(191, 191, 191, 0.22);
+    --font-display: "Outfit", "Inter", system-ui, sans-serif;
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     color-scheme: light;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --ink: #e6e9ef; --muted: #a2aab8; --line: #343b48; --bg: #161a21; --panel: #1e232c;
-      --accent: #7aa7ff; --yes: #5cc28a; --no: #f0857d; --grid: #2a303b;
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
-    --ink: #e6e9ef; --muted: #a2aab8; --line: #343b48; --bg: #161a21; --panel: #1e232c;
-    --accent: #7aa7ff; --yes: #5cc28a; --no: #f0857d; --grid: #2a303b;
-    color-scheme: dark;
-  }
-  html, body { margin: 0; background: var(--bg); }
-  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); line-height: 1.45; }
+  html, body { margin: 0; background: var(--white); }
+  body { font: 400 16px/1.55 var(--font-sans); color: var(--navy); -webkit-font-smoothing: antialiased; padding: 4px 4px 32px; }
   *, *::before, *::after { box-sizing: border-box; }
-  .pt { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg); }
-  .pt-head { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; justify-content: space-between;
-    padding: 12px 16px; border-bottom: 1px solid var(--line); }
-  .pt-title { margin: 0; font-size: 1.05rem; font-weight: 700; }
-  .pt-status { font-size: .8rem; color: var(--muted); }
-  .pt-body { padding: 16px; display: grid; gap: 20px; }
-  .pt-question { margin: 0; font-size: 1.15rem; font-weight: 600; }
-  .pt-sub { margin: 4px 0 0; font-size: .85rem; color: var(--muted); }
-  .pt-prob { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
-  .pt-big { font-size: 2.6rem; font-weight: 750; line-height: 1; font-variant-numeric: tabular-nums; }
-  .pt-big small { font-size: .9rem; font-weight: 500; color: var(--muted); margin-left: 6px; }
-  .pt-bar { flex: 1 1 200px; height: 10px; border-radius: 999px; background: var(--grid); overflow: hidden; min-width: 0; }
-  .pt-bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
-  .pt-note { font-size: .85rem; padding: 10px 12px; border-radius: 8px; background: var(--panel); border-left: 4px solid var(--accent); }
-  .pt-note.yes { border-left-color: var(--yes); } .pt-note.no { border-left-color: var(--no); }
-  h4 { margin: 0 0 8px; font-size: .95rem; }
+  :focus-visible { outline: 2px solid var(--orange-ink); outline-offset: 2px; }
+
+  .pt { background: var(--card); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow-card); }
+
+  /* Header band: peach wash fading to the card, section label, title, status */
+  .pt-head { padding: 22px 24px 18px; background: linear-gradient(180deg, var(--wash-100), var(--card)); }
+  .pt-label { display: inline-flex; align-items: center; gap: 12px; height: 35px; padding: 0 20px 0 16px; border-radius: 999px;
+    background: var(--navy); color: var(--white); font: 600 13px/1 var(--font-sans); letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; }
+  .pt-bars { display: grid; gap: 3px; width: 20px; }
+  .pt-bars i { display: block; height: 4px; border-radius: 2px; background: var(--white); opacity: .6; }
+  .pt-bars i:first-child { background: var(--orange); opacity: 1; }
+  .pt-bars i:nth-child(3) { width: 70%; }
+  .pt-title { margin: 16px 0 6px; font: 600 clamp(24px, 4.2vw, 34px)/1.2 var(--font-display); color: var(--navy); text-wrap: balance; }
+  .pt-status { font: 500 14px/1.4 var(--font-sans); color: var(--text-meta); }
+
+  .pt-body { padding: 8px 24px 28px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 30px; }
+  .pt-body > * { min-width: 0; }
+  .pt-question { margin: 0; font: 500 clamp(20px, 3.2vw, 26px)/1.3 var(--font-display); color: var(--navy); text-wrap: balance; }
+  .pt-eyebrow { font: 600 12px/1.4 var(--font-sans); letter-spacing: .18em; text-transform: uppercase; color: var(--text-meta); }
+  .pt-sub { margin: 10px 0 0; }
+
+  /* Probability */
+  .pt-prob { display: grid; gap: 12px; }
+  .pt-big { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; }
+  .pt-big strong { font: 700 clamp(52px, 10vw, 76px)/1 var(--font-display); color: var(--navy); font-variant-numeric: tabular-nums; }
+  .pt-bar { height: 12px; border-radius: 999px; background: var(--chip); overflow: hidden; }
+  .pt-bar span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--geranium), var(--orange)); }
+
+  .pt-note { font-size: 15px; padding: 14px 18px; border-radius: 8px; background: var(--wash-100); color: var(--text); }
+  .pt-note.yes { background: var(--teal-bg); color: var(--teal-ink); }
+  .pt-note.no { background: var(--tag-orange-bg); color: var(--orange-ink); }
+  .pt-note a { color: inherit; font-weight: 600; }
+
+  /* How it is decided */
+  details { background: var(--wash-50); border-radius: 10px; padding: 14px 18px; }
+  details summary { cursor: pointer; font: 600 13px/1.4 var(--font-sans); letter-spacing: .18em; text-transform: uppercase; color: var(--orange-ink); }
+  dl.pt-res { display: grid; grid-template-columns: max-content 1fr; gap: 10px 16px; margin: 14px 0 2px; font-size: 15px; color: var(--text); }
+  dl.pt-res dt { font: 600 12px/1.9 var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--text-meta); }
+  dl.pt-res dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+  h3 { margin: 0 0 14px; font: 600 22px/1.25 var(--font-display); color: var(--navy); }
+
+  /* Chart */
   .pt-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .pt-chart text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+  .pt-chart text { fill: var(--text-meta); font: 500 12px var(--font-sans); }
   .pt-chart .grid { stroke: var(--grid); stroke-width: 1; }
-  .pt-chart .line { fill: none; stroke: var(--accent); stroke-width: 2; }
-  .pt-chart .dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
-  details { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
-  details summary { cursor: pointer; font-weight: 600; font-size: .9rem; }
-  dl.pt-res { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 10px 0 2px; font-size: .85rem; }
-  dl.pt-res dt { color: var(--muted); } dl.pt-res dd { margin: 0; }
+  .pt-chart .line { fill: none; stroke: var(--orange); stroke-width: 3; stroke-linejoin: round; }
+  .pt-chart .dot { fill: var(--orange); stroke: var(--white); stroke-width: 2; }
+
+  /* Pills */
+  .pt-tag { display: inline-flex; align-items: center; min-height: 26px; padding: 3px 12px; border-radius: 999px;
+    font: 600 12px/1.2 var(--font-sans); letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+  .pt-tag.for, .pt-tag.yes { background: var(--teal-bg); color: var(--teal-ink); }
+  .pt-tag.against, .pt-tag.no { background: var(--tag-orange-bg); color: var(--orange-ink); }
+  .pt-tag.neutral { background: var(--slate-bg); color: var(--slate-ink); }
+
+  /* Actors */
   .pt-table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; font-size: .78rem; }
-  .pt-ev { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-  .pt-ev li { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: .88rem; overflow-wrap: anywhere; }
-  .pt-ev .meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .78rem; color: var(--muted); margin-bottom: 4px; }
-  .pt-tag { display: inline-block; padding: 0 8px; border-radius: 999px; font-weight: 600; font-size: .74rem; border: 1px solid currentColor; }
-  .pt-tag.yes { color: var(--yes); } .pt-tag.no { color: var(--no); }
-  .pt-ev a, .pt-foot a, .pt-res a { color: var(--accent); }
-  .pt-empty { color: var(--muted); font-size: .85rem; margin: 0; }
-  .pt-foot { padding: 10px 16px; font-size: .75rem; color: var(--muted); border-top: 1px solid var(--line); }
-  .pt-foot p { margin: 0 0 4px; }
-  .pt-msg { padding: 32px 16px; text-align: center; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th { text-align: left; padding: 0 10px 10px; font: 600 11px/1.3 var(--font-sans); letter-spacing: .14em; text-transform: uppercase; color: var(--text-meta); }
+  td { text-align: left; padding: 14px 10px; border-top: 1px solid var(--rule); vertical-align: top; color: var(--text); }
+  th:first-child, td:first-child { padding-left: 0; }
+  td.name { font-weight: 600; color: var(--navy); min-width: 8em; }
+  td.role { font-size: 14px; }
+  .role-inline { display: none; margin-top: 6px; font-weight: 400; font-size: 14px; color: var(--text); }
+  .pt-infl { display: inline-flex; gap: 3px; vertical-align: middle; }
+  .pt-infl i { width: 6px; height: 16px; border-radius: 3px; background: var(--chip); }
+  .pt-infl i.on { background: var(--orange); }
+  @media (max-width: 560px) {
+    .pt-head, .pt-foot { padding-left: 18px; padding-right: 18px; }
+    .pt-body { padding-left: 18px; padding-right: 18px; }
+    td, th { padding-left: 6px; padding-right: 6px; }
+    dl.pt-res { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    dl.pt-res dd { margin-bottom: 10px; }
+    th.role, td.role { display: none; }
+    .role-inline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    table.open .role-inline { display: block; }
+  }
+
+  /* Evidence */
+  .pt-ev { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+  .pt-ev li { background: var(--white); border-radius: 10px; box-shadow: var(--shadow-soft); padding: 16px 18px; overflow-wrap: anywhere; }
+  .pt-ev .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 8px; font: 500 14px/1.4 var(--font-sans); color: var(--text-meta); }
+  .pt-ev .summary { color: var(--text); }
+  .pt-link { display: inline-block; margin-top: 10px; font: 600 12px/1.4 var(--font-sans); letter-spacing: .12em; text-transform: uppercase;
+    color: var(--orange-ink); text-decoration: underline; text-underline-offset: 4px; }
+  .pt-empty { color: var(--text-meta); margin: 0; }
+  .pt-more { margin-top: 16px; height: 35px; padding: 0 20px; border: 0; border-radius: 999px; cursor: pointer;
+    background: var(--chip); color: var(--navy); font: 600 12px/1 var(--font-sans); letter-spacing: .18em; text-transform: uppercase; }
+  .pt-more:hover { background: var(--tag-orange-bg); }
+  .pt-hidden { display: none; }
+
+  .pt-foot { padding: 18px 24px 20px; background: var(--wash-50); font-size: 14px; color: var(--text-meta); }
+  .pt-foot p { margin: 0 0 6px; }
+  .pt-foot strong { color: var(--navy); }
+  .pt-foot a { color: var(--orange-ink); font-weight: 600; }
+  .pt-msg { padding: 40px 24px; text-align: center; color: var(--text-meta); }
 </style>
 </head>
 <body>
 <div class="pt" id="pt">
   <div class="pt-head">
-    <h3 class="pt-title">Prediction tracker</h3>
-    <span class="pt-status" aria-live="polite">Loading…</span>
+    <span class="pt-label"><span class="pt-bars" aria-hidden="true"><i></i><i></i><i></i></span>Prediction tracker</span>
+    <h2 class="pt-title">Loading…</h2>
+    <div class="pt-status" aria-live="polite"></div>
   </div>
   <div id="pt-main"><p class="pt-msg">Loading tracker…</p></div>
   <div class="pt-foot">
-    <p><strong>How this works:</strong> the probability starts from a base rate and moves with each piece of evidence an editor has approved.
+    <p><strong>How this works:</strong> the probability starts from a base rate and moves with each piece of evidence a FOSTBeat editor has approved.
       Each item adds or subtracts a fixed weight for its type of event, scaled by how influential the actor is. Proposed items that have not been
       reviewed are not counted.</p>
-    <p>Source: <a href="https://beat.joinfost.io" target="_blank" rel="noopener">FOSTBeat</a></p>
+    <p>Tracked by <a href="https://beat.joinfost.io" target="_blank" rel="noopener">FOSTBeat</a></p>
   </div>
 </div>
 <script>
@@ -111,12 +171,14 @@
   }
   function host(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } }
   function pct(p) { var v = p * 100; return (v >= 10 || v === 0 ? Math.round(v) : Math.round(v * 10) / 10) + '%'; }
-  function fmtDate(d) {
+  // Dates written out, as in the FOSTBeat style: "10 September 2026" (short months in the chart).
+  function fmtDate(d, short) {
     if (!d) return '';
     var t = new Date(d + 'T00:00:00Z');
-    return isNaN(t) ? d : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    return isNaN(t) ? d : t.toLocaleDateString('en-GB', { day: 'numeric', month: short ? 'short' : 'long', year: 'numeric', timeZone: 'UTC' });
   }
   function message(text) { main.textContent = ''; main.appendChild(el('p', { class: 'pt-msg', text: text })); }
+  function stanceClass(s) { return s > 0 ? 'for' : s < 0 ? 'against' : 'neutral'; }
 
   var NS = 'http://www.w3.org/2000/svg';
   function svg(tag, attrs) {
@@ -128,7 +190,7 @@
   // Step chart of probability over time: the value holds until the next change.
   // Drawn at the container's real width so the labels stay readable on phones.
   function chart(history, endDate, width) {
-    var W = Math.max(260, Math.round(width || 640)), H = W < 480 ? 180 : 220, L = 40, R = 12, T = 10, B = 26;
+    var W = Math.max(260, Math.round(width || 640)), H = W < 480 ? 180 : 220, L = 42, R = 12, T = 10, B = 28;
     var pts = history.map(function (h) { return { t: Date.parse(h.date + 'T00:00:00Z'), p: h.p, date: h.date }; })
       .filter(function (x) { return !isNaN(x.t); });
     var root = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img' });
@@ -142,23 +204,44 @@
     var y = function (p) { return T + (1 - p) * (H - T - B); };
     [0, 0.25, 0.5, 0.75, 1].forEach(function (g) {
       root.appendChild(svg('line', { x1: L, x2: W - R, y1: y(g), y2: y(g), class: 'grid' }));
-      var tx = svg('text', { x: L - 6, y: y(g) + 4, 'text-anchor': 'end' }); tx.textContent = Math.round(g * 100) + '%'; root.appendChild(tx);
+      var tx = svg('text', { x: L - 8, y: y(g) + 4, 'text-anchor': 'end' }); tx.textContent = Math.round(g * 100) + '%'; root.appendChild(tx);
     });
     var d = 'M' + x(pts[0].t) + ' ' + y(pts[0].p);
     for (var i = 1; i < pts.length; i++) d += ' H' + x(pts[i].t) + ' V' + y(pts[i].p);
     d += ' H' + x(tEnd);
     root.appendChild(svg('path', { d: d, class: 'line' }));
-    pts.forEach(function (pt) { root.appendChild(svg('circle', { cx: x(pt.t), cy: y(pt.p), r: 4, class: 'dot' })); });
-    var a = svg('text', { x: L, y: H - 6 }); a.textContent = fmtDate(pts[0].date); root.appendChild(a);
+    pts.forEach(function (pt) { root.appendChild(svg('circle', { cx: x(pt.t), cy: y(pt.p), r: 5, class: 'dot' })); });
+    var a = svg('text', { x: L, y: H - 6 }); a.textContent = fmtDate(pts[0].date, true); root.appendChild(a);
     var endIso = new Date(tEnd).toISOString().slice(0, 10);
     if (endIso !== pts[0].date) {
-      var b = svg('text', { x: W - R, y: H - 6, 'text-anchor': 'end' }); b.textContent = fmtDate(endIso); root.appendChild(b);
+      var b = svg('text', { x: W - R, y: H - 6, 'text-anchor': 'end' }); b.textContent = fmtDate(endIso, true); root.appendChild(b);
     }
     return root;
   }
 
+  // Shows the first `limit` items of a list and a button that reveals the rest,
+  // so the embed keeps a predictable height inside its iframe.
+  function limitList(items, limit, noun) {
+    if (items.length <= limit) return null;
+    items.forEach(function (node, i) { if (i >= limit) node.classList.add('pt-hidden'); });
+    var btn = el('button', { class: 'pt-more', type: 'button', 'aria-expanded': 'false', text: 'Show all ' + items.length + ' ' + noun });
+    btn.addEventListener('click', function () {
+      var open = btn.getAttribute('aria-expanded') !== 'true';
+      items.forEach(function (node, i) { if (i >= limit) node.classList.toggle('pt-hidden', !open); });
+      btn.setAttribute('aria-expanded', String(open));
+      btn.textContent = open ? 'Show fewer ' + noun : 'Show all ' + items.length + ' ' + noun;
+    });
+    return btn;
+  }
+
+  function influence(n) {
+    var bars = el('span', { class: 'pt-infl', role: 'img', 'aria-label': 'Influence ' + n + ' of 5' });
+    for (var i = 1; i <= 5; i++) bars.appendChild(el('i', { class: i <= n ? 'on' : '' }));
+    return bars;
+  }
+
   function render(data) {
-    document.title = data.title + ' · FOSTBeat prediction';
+    document.title = data.title + ' · FOSTBeat prediction tracker';
     titleEl.textContent = data.title;
     var resolved = data.status === 'resolved-yes' || data.status === 'resolved-no';
     statusEl.textContent = resolved ? 'Resolved ' + fmtDate(data.outcome && data.outcome.date) : 'Updated ' + fmtDate(data.updated);
@@ -166,7 +249,7 @@
     var body = el('div', { class: 'pt-body' });
     body.appendChild(el('div', null, [
       el('p', { class: 'pt-question', text: data.question }),
-      el('p', { class: 'pt-sub', text: 'Deadline: ' + fmtDate(data.deadline) }),
+      el('p', { class: 'pt-sub pt-eyebrow', text: 'Deadline · ' + fmtDate(data.deadline) }),
     ]));
 
     if (resolved) {
@@ -179,7 +262,7 @@
       ]));
     } else {
       body.appendChild(el('div', { class: 'pt-prob' }, [
-        el('div', { class: 'pt-big' }, [pct(data.probability), el('small', { text: 'chance of YES' })]),
+        el('div', { class: 'pt-big' }, [el('strong', { text: pct(data.probability) }), el('span', { class: 'pt-eyebrow', text: 'Chance of YES' })]),
         el('div', { class: 'pt-bar', role: 'presentation' }, [el('span', { style: 'width:' + (data.probability * 100) + '%' })]),
       ]));
       if (data.awaiting_resolution) {
@@ -193,45 +276,58 @@
         el('dt', { text: 'YES if' }), el('dd', { text: data.resolution.yes }),
         el('dt', { text: 'NO if' }), el('dd', { text: data.resolution.no }),
         el('dt', { text: 'Decided by' }), el('dd', { text: data.resolution.source }),
-        el('dt', { text: 'Starting point' }), el('dd', { text: pct(data.base_rate.p) + ' — ' + data.base_rate.reasoning }),
+        el('dt', { text: 'Starting point' }), el('dd', { text: pct(data.base_rate.p) + '. ' + data.base_rate.reasoning }),
       ]),
     ]));
 
     var chartBox = el('div');
-    body.appendChild(el('section', { class: 'pt-chart' }, [el('h4', { text: 'Probability over time' }), chartBox]));
+    body.appendChild(el('section', { class: 'pt-chart' }, [el('h3', { text: 'Probability over time' }), chartBox]));
 
     var actors = data.actors || [];
-    var actorSection = el('section', null, [el('h4', { text: 'Key actors' })]);
+    var actorSection = el('section', null, [el('h3', { text: 'Key actors' })]);
     if (actors.length) {
       var rows = actors.slice().sort(function (a, b) { return (b.influence || 0) - (a.influence || 0); }).map(function (a) {
         return el('tr', null, [
-          el('td', { text: a.name }), el('td', { text: a.role || '' }),
-          el('td', { text: STANCE[String(a.stance)] || '' }), el('td', { text: a.influence ? a.influence + ' / 5' : '' }),
+          el('td', { class: 'name' }, [a.name, a.role ? el('div', { class: 'role-inline', text: a.role }) : null]),
+          el('td', { class: 'role', text: a.role || '' }),
+          el('td', null, [STANCE[String(a.stance)] ? el('span', { class: 'pt-tag ' + stanceClass(a.stance), text: STANCE[String(a.stance)] }) : null]),
+          el('td', null, [a.influence ? influence(a.influence) : null]),
         ]);
       });
       actorSection.appendChild(el('div', { class: 'pt-table-wrap' }, [el('table', null, [
-        el('thead', null, [el('tr', null, [el('th', { text: 'Actor' }), el('th', { text: 'Role' }), el('th', { text: 'Stance on YES' }), el('th', { text: 'Influence' })])]),
+        el('thead', null, [el('tr', null, [el('th', { text: 'Actor' }), el('th', { class: 'role', text: 'Role' }), el('th', { text: 'Stance on YES' }), el('th', { text: 'Influence' })])]),
         el('tbody', null, rows),
       ])]));
+      var moreActors = limitList(rows, 5, 'actors');
+      if (moreActors) {
+        // On phones the full roles are shown only after "Show all".
+        moreActors.addEventListener('click', function () {
+          actorSection.querySelector('table').classList.toggle('open', moreActors.getAttribute('aria-expanded') === 'true');
+        });
+        actorSection.appendChild(moreActors);
+      }
     } else actorSection.appendChild(el('p', { class: 'pt-empty', text: 'No actors listed yet.' }));
     body.appendChild(actorSection);
 
     var evidence = data.evidence || [];
-    var evSection = el('section', null, [el('h4', { text: 'Evidence (' + evidence.length + ')' })]);
+    var evSection = el('section', null, [el('h3', { text: 'Evidence (' + evidence.length + ')' })]);
     if (evidence.length) {
-      evSection.appendChild(el('ul', { class: 'pt-ev' }, evidence.map(function (e) {
+      var items = evidence.map(function (e) {
         var url = safeUrl(e.source_url);
         return el('li', null, [
           el('div', { class: 'meta' }, [
+            el('span', { class: 'pt-tag ' + (e.direction === 'yes' ? 'yes' : 'no'), text: e.direction === 'yes' ? 'Towards YES' : 'Towards NO' }),
             el('span', { text: fmtDate(e.date) }),
             el('span', { text: e.signal_label || e.signal_type }),
-            el('span', { class: 'pt-tag ' + (e.direction === 'yes' ? 'yes' : 'no'), text: e.direction === 'yes' ? 'Towards YES' : 'Towards NO' }),
             e.actor ? el('span', { text: e.actor }) : null,
           ]),
-          el('div', { text: e.summary }),
-          url ? el('a', { href: url, target: '_blank', rel: 'noopener', text: host(url) }) : null,
+          el('div', { class: 'summary', text: e.summary }),
+          url ? el('a', { class: 'pt-link', href: url, target: '_blank', rel: 'noopener', text: host(url) + ' →' }) : null,
         ]);
-      })));
+      });
+      evSection.appendChild(el('ul', { class: 'pt-ev' }, items));
+      var moreEvidence = limitList(items, 5, 'evidence items');
+      if (moreEvidence) evSection.appendChild(moreEvidence);
     } else evSection.appendChild(el('p', { class: 'pt-empty', text: 'No reviewed evidence yet.' }));
     body.appendChild(evSection);
 
@@ -250,10 +346,11 @@
     window.addEventListener('resize', drawChart);
   }
 
+  function failed(text) { titleEl.textContent = 'Prediction tracker'; statusEl.textContent = ''; message(text); }
+
   var slug = new URLSearchParams(location.search).get('t') || '';
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
-    statusEl.textContent = '';
-    message(slug ? 'Tracker not found.' : 'No tracker chosen. Add ?t=<tracker> to the address.');
+    failed(slug ? 'Tracker not found.' : 'No tracker chosen. Add ?t=<tracker> to the address.');
     return;
   }
   fetch('trackers/' + slug + '/data.json', { cache: 'no-cache' })
@@ -264,8 +361,7 @@
     })
     .then(render)
     .catch(function (err) {
-      statusEl.textContent = '';
-      message(err.shown ? err.message : 'This tracker could not be loaded. Please try again later.');
+      failed(err.shown ? err.message : 'This tracker could not be loaded. Please try again later.');
     });
 })();
 </script>
