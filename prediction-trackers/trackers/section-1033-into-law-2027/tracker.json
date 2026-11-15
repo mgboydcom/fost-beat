@@ -106,8 +106,8 @@
       "influence": 3
     },
     {
-      "name": "Financial Technology Association and fintech/data-aggregator interests (incl. FDX)",
-      "role": "Intervened to defend the 2024 rule. Oppose the fee and access rollbacks under reconsideration. FDX was recognized as the standard-setter in 2025.",
+      "name": "Financial Technology Association (FTA)",
+      "role": "Fintech trade group. Intervened to defend the 2024 rule and opposes the fee and access rollbacks under reconsideration.",
       "stance": -1,
       "influence": 3
     },
@@ -120,6 +120,18 @@
     {
       "name": "Federal Reserve Board (funding channel)",
       "role": "CFPB funding flows through the Fed. Funding disputes in 2026 affect CFPB capacity to finish rulemaking.",
+      "stance": 0,
+      "influence": 2
+    },
+    {
+      "name": "Plaid",
+      "role": "Largest US data aggregator. Argued in its October 2025 comment letter that Section 1033 gives consumers free access to their data and opposes bank fees for access. Likely to contest a revised rule that allows fees, which could slow it.",
+      "stance": -1,
+      "influence": 3
+    },
+    {
+      "name": "Financial Data Exchange (FDX)",
+      "role": "Industry standards body recognized by the CFPB in 2025 as the first standard setter under the 1033 rule. Its standards shape how any revised rule is implemented; it wants a settled rule rather than a particular timetable.",
       "stance": 0,
       "influence": 2
     }
@@ -144,6 +156,14 @@
     {
       "name": "Forcht Bank v. CFPB docket, E.D. Kentucky (via CourtListener/PACER)",
       "url": "https://www.courtlistener.com/"
+    },
+    {
+      "name": "Plaid blog (policy posts and CFPB comment letters)",
+      "url": "https://plaid.com/blog/"
+    },
+    {
+      "name": "Financial Data Exchange (FDX) news and statements",
+      "url": "https://financialdataexchange.org/"
     }
   ],
   "queries": [
@@ -151,6 +171,8 @@
     "OIRA review CFPB 1033 proposed rule status",
     "Forcht Bank v. CFPB injunction docket update",
     "CFPB 1033 Unified Agenda final rule date",
-    "CFPB acting director Vought nomination 2026"
+    "CFPB acting director Vought nomination 2026",
+    "Plaid blog Section 1033 CFPB",
+    "Financial Data Exchange FDX statement Section 1033"
   ]
 }
