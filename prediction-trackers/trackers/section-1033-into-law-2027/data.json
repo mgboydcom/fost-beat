@@ -1,0 +1,156 @@
+{
+  "slug": "section-1033-into-law-2027",
+  "title": "Section 1033 open banking rule: final revised rule by end of 2027",
+  "question": "Will the CFPB publish a final rule amending or replacing the Personal Financial Data Rights rule (12 CFR part 1033, implementing Section 1033 of the Dodd-Frank Act) in the Federal Register on or before December 31, 2027?",
+  "deadline": "2027-12-31",
+  "resolution": {
+    "yes": "A final rule amending, replacing, or re-issuing 12 CFR part 1033 (the Personal Financial Data Rights rule), including an interim final rule, appears in the Federal Register with a publication date on or before 2027-12-31.",
+    "no": "No such final or interim final rule is published in the Federal Register by 2027-12-31. A proposed rule, a court ruling, a federal statute or a state law does not count on its own.",
+    "source": "Federal Register (federalregister.gov) publication date, searching for 12 CFR part 1033 and CFPB final rules; cross-checked against the CFPB Personal Financial Data Rights page and reginfo.gov."
+  },
+  "base_rate": {
+    "p": 0.15,
+    "reasoning": "As of 2026-11-15, the CFPB has not published a proposed rule. Its revised proposal (titled 'Personal Financial Data Rights Reconsideration') was sent to OIRA for review in early August 2026, and the CFPB's August 2025 advance notice was the first step. For a final rule by 2027-12-31, the NPRM would need to publish around December 2026, followed by a 60 to 90 day comment period and a final rule within roughly 9 to 12 months. Comparable case: the 2023 proposal (October 19, 2023) led to the 2024 final rule (October 22, 2024), about 12 months. That timeline only just fits. Against it: the rule is enjoined pending reconsideration, so urgency is lower. The CFPB's funding and staffing have been disputed in court through 2026. Speed is not assured. A Dec 2026 publication with a fast comment period could still meet the deadline, which is why the draft sits at about 15% rather than lower. Caveat: several secondary sources (blogs) predict a Q4 2026 NPRM, but these are not primary and were not verified against the Federal Register."
+  },
+  "status": "active",
+  "awaiting_resolution": false,
+  "probability": 0.15,
+  "updated": "2026-11-15",
+  "history": [
+    {
+      "date": "2026-11-15",
+      "p": 0.15,
+      "evidence_ids": []
+    }
+  ],
+  "signals": [
+    {
+      "type": "oira_review_concluded",
+      "label": "OIRA clears the revised NPRM (raises: publication likely within weeks)",
+      "weight": 0.5
+    },
+    {
+      "type": "proposed_rule_published",
+      "label": "NPRM published in the Federal Register, starting the comment clock (raises)",
+      "weight": 0.6
+    },
+    {
+      "type": "comment_period_closed",
+      "label": "NPRM comment period closes without a major new delay (raises slightly)",
+      "weight": 0.2
+    },
+    {
+      "type": "final_rule_sent_to_oira",
+      "label": "Final rule submitted to OIRA review (decisive procedural step; publication typically follows within weeks)",
+      "weight": 1
+    },
+    {
+      "type": "interim_final_rule_route",
+      "label": "CFPB signals it will issue an interim final rule instead of the proposed-rule route (an interim final rule counts as YES once published)",
+      "weight": 0.8
+    },
+    {
+      "type": "injunction_lifted_or_case_dismissed",
+      "label": "Court lifts or modifies the Eastern District of Kentucky injunction, or dismisses Forcht Bank v. CFPB (raises: reduces pressure to finish)",
+      "weight": 0.4
+    },
+    {
+      "type": "court_vacatur_final_judgment",
+      "label": "Final judgment vacating the 2024 rule (ambiguous: may prompt a replacement rule or reduce urgency)",
+      "weight": 0.5
+    },
+    {
+      "type": "cfpb_leadership_change",
+      "label": "Permanent CFPB director confirmed, or acting-director authority lapses (direction depends on nominee's priorities)",
+      "weight": 0.3
+    },
+    {
+      "type": "funding_or_staff_cut",
+      "label": "New court order, funding shortfall, or staff reduction constrains CFPB rulemaking capacity (lowers)",
+      "weight": 0.4
+    },
+    {
+      "type": "unified_agenda_date",
+      "label": "Unified Agenda lists a final-rule date on or before 2027-12-31 (raises modestly; agendas often slip)",
+      "weight": 0.3
+    },
+    {
+      "type": "congressional_bill_advances",
+      "label": "A federal bill touching open banking or 1033 (e.g., GLBA modernization) passes a chamber (small effect on the rule question)",
+      "weight": 0.2
+    }
+  ],
+  "actors": [
+    {
+      "name": "Consumer Financial Protection Bureau (CFPB)",
+      "role": "Issuing agency. Reconsidering the 2024 rule and drafting the revised NPRM. Only body that can issue the implementing rule.",
+      "stance": 1,
+      "influence": 5,
+      "notes": "From the tracker specification"
+    },
+    {
+      "name": "Russ Vought (acting CFPB director; OMB director)",
+      "role": "Leads the CFPB's reconsideration. Acting tenure has been disputed under the Vacancies Act. Also controls OMB, which runs the OIRA review.",
+      "stance": 1,
+      "influence": 5,
+      "notes": "From the tracker specification"
+    },
+    {
+      "name": "Office of Information and Regulatory Affairs (OIRA, within OMB)",
+      "role": "Gatekeeper for the NPRM and final rule under Executive Order 12866. Review timing controls publication timing.",
+      "stance": 1,
+      "influence": 4,
+      "notes": "From the tracker specification"
+    },
+    {
+      "name": "E.D. Kentucky federal court (Forcht Bank, N.A. v. CFPB)",
+      "role": "Entered the October 2025 order barring CFPB enforcement until reconsideration is complete. Its rulings on the injunction or the merits affect timing and the status of the 2024 rule.",
+      "stance": 0,
+      "influence": 4,
+      "notes": "From the tracker specification"
+    },
+    {
+      "name": "Forcht Bank and bank trade groups (ABA, CBA)",
+      "role": "Plaintiffs who challenged the 2024 rule. They want fee allowances and major revisions, and have pressed the CFPB to suspend compliance dates.",
+      "stance": 1,
+      "influence": 3,
+      "notes": "From the tracker specification"
+    },
+    {
+      "name": "Financial Technology Association (FTA)",
+      "role": "Fintech trade group. Intervened to defend the 2024 rule and opposes the fee and access rollbacks under reconsideration.",
+      "stance": -1,
+      "influence": 3,
+      "notes": "From the tracker specification"
+    },
+    {
+      "name": "Senate Banking and House Financial Services Committees",
+      "role": "Oversight of the CFPB; could legislate on Section 1033 or related privacy and open-banking provisions (e.g., GLBA modernization bill).",
+      "stance": 0,
+      "influence": 3,
+      "notes": "From the tracker specification"
+    },
+    {
+      "name": "Federal Reserve Board (funding channel)",
+      "role": "CFPB funding flows through the Fed. Funding disputes in 2026 affect CFPB capacity to finish rulemaking.",
+      "stance": 0,
+      "influence": 2,
+      "notes": "From the tracker specification"
+    },
+    {
+      "name": "Plaid",
+      "role": "Largest US data aggregator. Argued in its October 2025 comment letter that Section 1033 gives consumers free access to their data and opposes bank fees for access. Likely to contest a revised rule that allows fees, which could slow it.",
+      "stance": -1,
+      "influence": 3,
+      "notes": "From the tracker specification"
+    },
+    {
+      "name": "Financial Data Exchange (FDX)",
+      "role": "Industry standards body recognized by the CFPB in 2025 as the first standard setter under the 1033 rule. Its standards shape how any revised rule is implemented; it wants a settled rule rather than a particular timetable.",
+      "stance": 0,
+      "influence": 2,
+      "notes": "From the tracker specification"
+    }
+  ],
+  "evidence": []
+}
