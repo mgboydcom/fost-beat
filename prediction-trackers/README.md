@@ -7,7 +7,7 @@ evidence an editor has approved. Embed it in a post with an iframe:
 ```html
 <iframe src="https://mgboydcom.github.io/fost-beat/prediction-trackers/prediction.html?t=<slug>"
         title="Prediction tracker"
-        style="width:100%;height:1200px;border:0" loading="lazy"></iframe>
+        style="width:100%;height:1600px;border:0" loading="lazy"></iframe>
 ```
 
 How a tracker is born and kept up to date:

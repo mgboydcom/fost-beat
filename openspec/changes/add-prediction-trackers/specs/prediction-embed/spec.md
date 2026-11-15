@@ -28,9 +28,13 @@ The page SHALL show the question, the deadline, the resolution criteria, the cur
 - **WHEN** a reader opens a resolved tracker's page
 - **THEN** the page states the outcome and its source in place of a live probability
 
-### Requirement: Readable on phones and in both colour schemes
-The page SHALL be usable at phone width without horizontal scrolling and SHALL be legible in light and dark colour schemes.
+### Requirement: Readable on phones and styled to the FOSTBeat design system
+The page SHALL be usable at phone width without horizontal scrolling and SHALL follow the FOSTBeat design system (its fonts, colours and light theme), so the embed looks like part of the blog.
 
 #### Scenario: Phone width
-- **WHEN** the page is shown 360 pixels wide
+- **WHEN** the page is shown 320 pixels wide
 - **THEN** all content fits without horizontal scrolling
+
+#### Scenario: Long lists
+- **WHEN** a tracker has more than five actors or evidence items
+- **THEN** the page shows the first five of each with a control that reveals the rest
