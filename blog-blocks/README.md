@@ -25,6 +25,27 @@ snippet is built to work with no script:
 Each snippet carries its own scoped `fbb-` styles and follows the site's dark mode
 (`<html data-theme="dark">` or a `.dark` parent).
 
+## Links in the text
+
+Body-text fields take inline links: Into Action intro and step descriptions, Key Takeaways
+points, Office Hours description, Quote text and Pull Quote text. Write a link as:
+
+```
+Go check out the [API guide](https://example.org/guide) before you start.
+```
+
+- Select the words and press **+ Link** under the field: it writes `[words](https://)` and selects
+  `https://` to type over.
+- Only `https://`, `http://` and `mailto:` addresses become links. Anything else (such as a
+  relative address) stays as typed, and the generator says which link was not made.
+- An address typed on its own, without the `[text](address)` form, stays as text.
+- Links to `beat.joinfost.io` open in the same tab; links to other sites open in a new tab.
+- Titles, labels, names and captions stay plain text.
+- Links keep the block's text colour with an orange underline, so they stay readable on every
+  block background in light and dark mode.
+- Copy Strapi JSON and the embedded field values keep the `[text](address)` form, so
+  **Edit a pasted block** brings links back as typed.
+
 ## Working on one article
 
 The ME dashboard opens the generator for one article with two parameters:
