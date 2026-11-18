@@ -82,6 +82,8 @@ dialog p{margin:0 0 10px;color:var(--muted);font-size:14px}
 dialog textarea{min-height:200px;font-family:var(--f-mono);font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:14px;font-weight:500;padding:10px 18px;border-radius:999px;z-index:60}
 .hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.linkbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:-6px 0 12px}
+.linkbar small{color:var(--muted);font-size:12px}
 .article{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:18px 0 0;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font-size:14px}
 .article[hidden]{display:none}
 .article b{overflow-wrap:anywhere}
@@ -155,7 +157,7 @@ a.btn{text-decoration:none}
 <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
 
 <script type="module">
-import { BLOCKS, defaults, itemDefaults, missing, render, decodeSource, esc, uid } from "./blocks.js";
+import { BLOCKS, defaults, itemDefaults, missing, linkProblems, render, decodeSource, esc, uid } from "./blocks.js";
 
 const $ = s => document.querySelector(s);
 const store = {
@@ -243,7 +245,26 @@ function input(f, value, onChange) {
   } else wrap.appendChild(el);
   if (f.help) { const s = document.createElement("small"); s.textContent = f.help; wrap.appendChild(s); }
   el.addEventListener("input", () => onChange(f.type === "number" ? (el.value === "" ? "" : Number(el.value)) : el.value));
-  return wrap;
+  if (!f.links) return wrap;
+  // Fields that take links: a hint and a + Link button, kept outside the <label> so neither joins the field's name.
+  const box = document.createElement("div");
+  const bar = document.createElement("div"); bar.className = "linkbar";
+  const hint = document.createElement("small"); hint.id = id + "-links";
+  hint.textContent = "Add a link: [link text](https://…)";
+  el.setAttribute("aria-describedby", hint.id);
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.className = "btn ghost small"; btn.textContent = "+ Link";
+  btn.setAttribute("aria-label", "Add a link to " + f.label.toLowerCase());
+  btn.addEventListener("click", () => {
+    const a = el.selectionStart ?? el.value.length, b = el.selectionEnd ?? a;
+    const words = el.value.slice(a, b) || "link text";
+    const start = a + words.length + 3;   // after "[words]("
+    el.value = el.value.slice(0, a) + "[" + words + "](https://)" + el.value.slice(b);
+    el.focus(); el.setSelectionRange(start, start + "https://".length);
+    el.dispatchEvent(new Event("input"));
+  });
+  bar.append(btn, hint); box.append(wrap, bar);
+  return box;
 }
 
 function buildForm() {
@@ -302,7 +323,7 @@ function update() {
   clearTimeout(heightTimer);
   heightTimer = setTimeout(() => { frame.srcdoc = previewDoc(html); }, 120);
   const miss = missing(block, data);
-  const warn = block.validate ? block.validate(data) : [];
+  const warn = [...(block.validate ? block.validate(data) : []), ...linkProblems(block, data)];
   const box = $("#messages"); box.innerHTML = "";
   if (miss.length) box.insertAdjacentHTML("beforeend", `<div class="msg"><b>Still to fill in:</b><ul>${miss.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div>`);
   if (warn.length) box.insertAdjacentHTML("beforeend", `<div class="msg"><ul>${warn.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div>`);

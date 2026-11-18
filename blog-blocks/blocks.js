@@ -17,6 +17,51 @@ export function esc(s) {
 const has = v => v != null && String(v).trim() !== "";
 const pad = n => String(n).padStart(2, "0");
 
+/* ------------------------------------------------------------ inline links */
+// Body-text fields (flagged `links: true`) accept [link text](address). The raw text is split on that
+// pattern and every piece is escaped, so nothing typed reaches the HTML as markup. Only https, http and
+// mailto addresses with non-empty link text become <a>; anything else stays visible as typed.
+// The address may hold one level of parentheses, as in Wikipedia links.
+const LINK_RE = /\[([^\]\n]+)\]\(([^\s()]*(?:\([^\s()]*\)[^\s()]*)*)\)/g;
+const LINK_OK = /^(https?:\/\/\S+|mailto:[^\s@]+@\S+)$/i;
+const SAME_TAB_HOST = "beat.joinfost.io";
+
+function linkTarget(href) {
+  if (/^mailto:/i.test(href)) return "";
+  try { if (new URL(href).hostname.toLowerCase() === SAME_TAB_HOST) return ""; } catch { /* odd address: new tab */ }
+  return ' target="_blank" rel="noopener"';
+}
+
+export function linked(text) {
+  const s = String(text ?? "");
+  let out = "", last = 0;
+  for (const m of s.matchAll(LINK_RE)) {
+    out += esc(s.slice(last, m.index));
+    const [whole, label, href] = m;
+    out += label.trim() && LINK_OK.test(href)
+      ? `<a href="${esc(href)}"${linkTarget(href)}>${esc(label)}</a>`
+      : esc(whole);
+    last = m.index + whole.length;
+  }
+  return out + esc(s.slice(last));
+}
+
+// Links written in the [text](address) form that linked() leaves as text, as messages for the form.
+export function linkProblems(block, d) {
+  const out = [];
+  const check = (where, text) => {
+    for (const [, label, href] of String(text ?? "").matchAll(LINK_RE)) {
+      if (!label.trim()) out.push(`${where}: a link has no link text, so it was not made`);
+      else if (!LINK_OK.test(href)) out.push(`${where}: link "${label}" was not made (only https, http and mailto addresses)`);
+    }
+  };
+  for (const f of block.fields) {
+    if (f.type === "list") (d[f.key] || []).forEach((r, i) => f.fields.forEach(sf => { if (sf.links) check(`${f.itemLabel} ${i + 1} ${sf.label.toLowerCase()}`, r[sf.key]); }));
+    else if (f.links) check(f.label, d[f.key]);
+  }
+  return out;
+}
+
 export function uid() {
   return Math.random().toString(36).slice(2, 7);
 }
@@ -157,12 +202,12 @@ export const BLOCKS = [
     fields: [
       { key: "label", label: "Label", type: "text", default: "Into Action" },
       { key: "title", label: "Title", type: "text", required: true, default: "Three places to start" },
-      { key: "intro", label: "Intro", type: "textarea" },
+      { key: "intro", label: "Intro", type: "textarea", links: true },
       {
         key: "items", label: "Steps", type: "list", min: 1, itemLabel: "Step",
         fields: [
           { key: "title", label: "Step title", type: "text", required: true },
-          { key: "description", label: "Description", type: "textarea" },
+          { key: "description", label: "Description", type: "textarea", links: true },
         ],
       },
     ],
@@ -181,11 +226,11 @@ export const BLOCKS = [
       const body = `<aside class="fbb-action" aria-labelledby="fbb-action-title-${o.id}">
   <p class="fbb-label">${ICON.action("fbb-g-action-" + o.id)}${esc(d.label)}</p>
   <h3 class="fbb-action__title" id="fbb-action-title-${o.id}">${esc(d.title)}</h3>${has(d.intro) ? `
-  <p class="fbb-action__intro">${esc(d.intro)}</p>` : ""}
+  <p class="fbb-action__intro">${linked(d.intro)}</p>` : ""}
   <ol class="fbb-action__list">${items.map(i => `
     <li class="fbb-action__item">
       <h4>${esc(i.title)}</h4>${has(i.description) ? `
-      <p>${esc(i.description)}</p>` : ""}
+      <p>${linked(i.description)}</p>` : ""}
     </li>`).join("")}
   </ol>
 </aside>`;
@@ -200,7 +245,7 @@ export const BLOCKS = [
     blurb: "Summary box placed after the intro. Up to six points.",
     fields: [
       { key: "title", label: "Label", type: "text", default: "Key takeaways" },
-      { key: "points", label: "Points", type: "list", min: 1, max: 6, itemLabel: "Point", fields: [{ key: "text", label: "Point", type: "textarea", required: true }] },
+      { key: "points", label: "Points", type: "list", min: 1, max: 6, itemLabel: "Point", fields: [{ key: "text", label: "Point", type: "textarea", required: true, links: true }] },
     ],
     example: {
       title: "Key takeaways",
@@ -215,7 +260,7 @@ export const BLOCKS = [
       const body = `<aside class="fbb-takeaways" aria-label="${esc(d.title || "Key takeaways")}">
   <p class="fbb-label">${ICON.takeaways("fbb-g-take-" + o.id)}${esc(d.title)}</p>
   <ul>${pts.map(p => `
-    <li>${ICON.check}<span>${esc(p.text)}</span></li>`).join("")}
+    <li>${ICON.check}<span>${linked(p.text)}</span></li>`).join("")}
   </ul>
 </aside>`;
       return wrap(this.type, this.name, d, STYLES.keyTakeaways, body);
@@ -230,7 +275,7 @@ export const BLOCKS = [
     fields: [
       { key: "label", label: "Label", type: "text", default: "Open office hours" },
       { key: "title", label: "Title", type: "text", required: true, default: "Bring your questions to the FOSTBeat team" },
-      { key: "description", label: "Description", type: "textarea", default: "Every Friday at 16:00 CET we open a drop-in call to talk through this week's articles, your API and AI questions, or ideas for a story." },
+      { key: "description", label: "Description", type: "textarea", links: true, default: "Every Friday at 16:00 CET we open a drop-in call to talk through this week's articles, your API and AI questions, or ideas for a story." },
       { key: "joinUrl", label: "Join link (Zoom)", type: "url", required: true, default: "https://zoom.us/j/YOUR-MEETING-ID" },
       { key: "dayOfWeek", label: "Day", type: "select", options: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"], default: "friday", required: true },
       { key: "startTime", label: "Start time", type: "time", default: "16:00", required: true },
@@ -253,7 +298,7 @@ export const BLOCKS = [
       const body = `<aside class="fbb-hours" data-fbb-hours data-day="${s.day}" data-hour="${s.hh}" data-minute="${s.mm}" data-tz="${esc(d.timezone)}" aria-labelledby="fbb-hours-title-${o.id}">
   <p class="fbb-label">${ICON.hours("fbb-g-hours-" + o.id)}${esc(d.label)}</p>
   <h3 class="fbb-hours__title" id="fbb-hours-title-${o.id}">${esc(d.title)}</h3>${has(d.description) ? `
-  <p class="fbb-hours__desc">${esc(d.description)}</p>` : ""}
+  <p class="fbb-hours__desc">${linked(d.description)}</p>` : ""}
   <ul class="fbb-hours__facts">
     <li>${ICON.clock}<span>${esc(cap(d.dayOfWeek || "friday"))}s, ${time} ${esc(d.timezoneLabel)} <span data-fbb-local></span></span></li>
     <li>${ICON.video}<span>${esc(d.platformLabel)} · ${esc(s.dur)} min</span></li>${has(d.note) ? `
@@ -276,7 +321,7 @@ export const BLOCKS = [
     name: "Quote",
     blurb: "Quote credited to a speaker or source, with photo and role.",
     fields: [
-      { key: "quote", label: "Quote", type: "textarea", required: true },
+      { key: "quote", label: "Quote", type: "textarea", required: true, links: true },
       { key: "authorName", label: "Name", type: "text", required: true },
       { key: "authorRole", label: "Role", type: "text" },
       { key: "authorImage", label: "Photo URL", type: "image", help: "Square works best. Shown as a 44px circle." },
@@ -299,7 +344,7 @@ export const BLOCKS = [
       const body = `<figure class="fbb-quote">
   ${ICON.quote("fbb-g-quote-" + o.id)}
   <blockquote>
-    <p>${esc(d.quote)}</p>
+    <p>${linked(d.quote)}</p>
   </blockquote>
   <figcaption>${has(d.authorImage) ? `
     <img src="${esc(d.authorImage)}" alt="">` : ""}
@@ -317,13 +362,13 @@ export const BLOCKS = [
     name: "Pull Quote",
     blurb: "A line lifted from the article in large type.",
     fields: [
-      { key: "text", label: "Text", type: "textarea", required: true },
+      { key: "text", label: "Text", type: "textarea", required: true, links: true },
       { key: "attribution", label: "Attribution", type: "text" },
     ],
     example: { text: "AI is not a strategy. A pilot is not a transformation.", attribution: "Su Jella" },
     render(d) {
       const body = `<figure class="fbb-pull">
-  <p>${esc(d.text)}</p>${has(d.attribution) ? `
+  <p>${linked(d.text)}</p>${has(d.attribution) ? `
   <cite>${esc(d.attribution)}</cite>` : ""}
 </figure>`;
       return wrap(this.type, this.name, d, STYLES.pullQuote, body);
