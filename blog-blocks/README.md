@@ -64,6 +64,31 @@ admin, ready for pasting. The link is built from the Strapi admin address fixed 
 Drafts are kept per article: an article opened for the first time starts empty, and opening it
 again brings back its fields. Without `doc`, the generator uses the drafts it always has.
 
+## Newsletter images
+
+The **Newsletter images** group in the picker makes the two beehiiv images for each issue, for all five
+newsletters (The Drum, Ctrl+Alt+Own, Open Tech FTW!, The AI Generation, Soirée):
+
+| Image | Size and file | Fields |
+|---|---|---|
+| **Post thumbnail** | 1200 × 630 PNG, e.g. `the-drum-issue-42-thumbnail.png` | Issue number, date (shown as `20 NOV 2026`), headline |
+| **In-email banner** | 1200 × 600 JPEG (quality 90), e.g. `ctrl-alt-own-banner-who-owns-your-stack.jpg` | Category, headline, standfirst, button text, photo |
+
+- Choosing a newsletter sets its colours, motif, FOSTBeat logo version, cadence and font, exactly as in the
+  [FOSTBeat Newsletter Branding](https://claude.ai/artifact/Jr7ULLg5qTqiF1uWDQUNvW) canvas. Soirée is set in Inter.
+- **Photo:** choose a file, then drag the frame (or use the arrow keys; Shift and the arrow keys resize it) to pick
+  the part shown in the banner's 520 × 488 photo space. "This will look soft" means the framed part is smaller
+  than the space.
+- **Text that does not fit:** headlines shrink to fit (thumbnail 68px down to 48px, banner 54px down to 40px, up to
+  three lines). If they still don't fit, the image cuts them with "…" and the page asks you to shorten them.
+- **Download image** saves the file; **Also download at 2×** adds a sharper `@2x` copy for high-resolution screens.
+  Download waits until the newsletter's fonts have loaded, so an image is never drawn in a fallback font.
+- **Alt text** is filled in from the fields (thumbnail: "The Drum, issue 42: <headline>"; banner: the headline)
+  until you edit it. **Copy alt text** copies it for beehiiv's image alt field.
+- Fields are kept in the browser per image type and newsletter; the photo is not kept. Nothing leaves the browser.
+
+The themes and layouts live in `newsletter-images.js`. If the branding canvas changes, update `THEMES` there.
+
 ## Editing a block later
 
 The first line of every snippet is a comment holding the field values
@@ -78,6 +103,9 @@ browser per block type.
 | `index.html` | The generator page (no build step, no dependencies) |
 | `blocks.js` | Field definitions and HTML renderers. No DOM or framework code, so a Strapi plugin or a server can import it |
 | `styles.js` | Scoped CSS for each block, copied from the FOSTBeat Blog Blocks library |
+| `newsletter-images.js` | Newsletter image themes, layouts and drawing (Canvas 2D), with no DOM beyond the canvas it is given |
+| `newsletter-ui.js` | The Newsletter images panel: newsletter choice, fields, photo frame, preview, alt text, download |
+| `assets/fostbeat-logo-*.svg` | FOSTBeat logo (light, dark, white), with colours written into each file |
 | `strapi/components/blog/*.json` | Strapi component schemas from the developer kit. Field keys match `blocks.js` |
 | `strapi/article-blocks-attribute.json` | The `blocks` dynamic zone attribute for the Article type |
 

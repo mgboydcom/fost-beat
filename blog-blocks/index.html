@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FOSTBeat Block Generator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 :root{
   --bg:#f7f4f2; --surface:#fff; --fg:#111525; --muted:#5a5a5a; --line:#e8e0db; --field:#fff;
@@ -82,6 +82,22 @@ dialog p{margin:0 0 10px;color:var(--muted);font-size:14px}
 dialog textarea{min-height:200px;font-family:var(--f-mono);font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:14px;font-weight:500;padding:10px 18px;border-radius:999px;z-index:60}
 .hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.grid[hidden]{display:none}
+.picker{display:flex;flex-direction:column;gap:10px}
+.picker-group{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.picker-label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-width:9.5em}
+.picker-row{display:flex;flex-wrap:wrap;gap:8px}
+.nl-row{display:flex;flex-wrap:wrap;gap:6px}
+.nl-row button{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.nl-row button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.nl-row button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.img-preview{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);margin-bottom:10px}
+.crop{position:relative;max-width:100%;overflow:hidden;border-radius:8px;touch-action:none;user-select:none;margin:0 0 8px}
+.crop[hidden]{display:none}
+.crop canvas{display:block;width:100%;height:100%}
+.crop-frame{position:absolute;cursor:move;outline:2px solid var(--accent);box-shadow:0 0 0 9999px color-mix(in srgb,#000 45%,transparent)}
+.crop-frame:focus-visible{outline:3px solid #fff;box-shadow:0 0 0 3px var(--accent),0 0 0 9999px color-mix(in srgb,#000 45%,transparent)}
+.crop-handle{position:absolute;right:3px;bottom:3px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--fg);cursor:nwse-resize}
 .linkbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:-6px 0 12px}
 .linkbar small{color:var(--muted);font-size:12px}
 .article{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:18px 0 0;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font-size:14px}
@@ -102,9 +118,12 @@ a.btn{text-decoration:none}
     <a class="btn ghost small" id="article-link" target="_blank" rel="noopener noreferrer">Open this article in Strapi ↗</a>
   </p>
 
-  <nav class="picker" id="picker" aria-label="Block type"></nav>
+  <nav class="picker" id="picker" aria-label="Block type">
+    <div class="picker-group" role="group" aria-labelledby="pk-blog"><span class="picker-label" id="pk-blog">Blog blocks</span><div class="picker-row" id="picker-blog"></div></div>
+    <div class="picker-group" role="group" aria-labelledby="pk-img"><span class="picker-label" id="pk-img">Newsletter images</span><div class="picker-row" id="picker-img"></div></div>
+  </nav>
 
-  <div class="grid">
+  <div class="grid" id="blog-ui">
     <section class="panel" aria-labelledby="form-title">
       <h2 id="form-title"></h2>
       <p class="blurb" id="form-blurb"></p>
@@ -141,6 +160,38 @@ a.btn{text-decoration:none}
       <p class="hint">Paste into the article body as HTML (Markdown or HTML source view). Strapi's rich-text "Blocks" editor does not accept raw HTML.</p>
     </section>
   </div>
+
+  <div class="grid" id="image-ui" hidden>
+    <section class="panel" aria-labelledby="img-title">
+      <h2 id="img-title"></h2>
+      <p class="blurb" id="img-blurb"></p>
+      <div class="f"><span id="img-nl-label">Newsletter</span>
+        <div class="nl-row" id="img-newsletters" role="group" aria-labelledby="img-nl-label"></div>
+      </div>
+      <form id="img-form" autocomplete="off" novalidate></form>
+      <div id="img-photo" hidden>
+        <label class="f"><span>Photo</span><input type="file" id="img-photo-file" accept="image/png,image/jpeg,image/webp"></label>
+        <div class="crop" id="img-crop" hidden>
+          <canvas id="img-crop-canvas" aria-hidden="true"></canvas>
+          <div class="crop-frame" id="img-crop-frame" role="group" tabindex="0"><span class="crop-handle" id="img-crop-handle" aria-hidden="true"></span></div>
+        </div>
+        <p class="hint">Drag the frame to choose the part of the photo shown in the banner; drag its corner, or use Shift and the arrow keys, to resize it.</p>
+      </div>
+    </section>
+
+    <section class="preview-col" aria-label="Image preview and download">
+      <canvas id="img-canvas" class="img-preview" role="img"></canvas>
+      <div id="img-messages"></div>
+      <label class="f"><span>Alt text</span><textarea id="img-alt" rows="2"></textarea>
+        <small>Filled in from the fields until you edit it. Paste it as the image's alt text in beehiiv.</small></label>
+      <div class="opts"><label><input type="checkbox" id="img-2x"> Also download at 2× for sharp screens</label></div>
+      <div class="row">
+        <button class="btn" type="button" id="img-download" disabled>Download image</button>
+        <button class="btn ghost" type="button" id="img-copy-alt">Copy alt text</button>
+      </div>
+      <p class="hint">Upload the downloaded file in beehiiv: the thumbnail as the post thumbnail, the banner as an image in the email.</p>
+    </section>
+  </div>
 </div>
 
 <dialog id="import">
@@ -158,6 +209,7 @@ a.btn{text-decoration:none}
 
 <script type="module">
 import { BLOCKS, defaults, itemDefaults, missing, linkProblems, render, decodeSource, esc, uid } from "./blocks.js";
+import { initNewsletterImages } from "./newsletter-ui.js";
 
 const $ = s => document.querySelector(s);
 const store = {
@@ -196,19 +248,21 @@ let data;
 let blockId = uid();   // stable per editing session so the HTML doesn't churn on each keystroke
 let dark = false;
 
-/* ---------- picker */
+/* ---------- picker: blog blocks, then newsletter images */
 const picker = $("#picker");
+const pick = (key) => picker.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.type === key)));
 BLOCKS.forEach(b => {
   const btn = document.createElement("button");
   btn.type = "button"; btn.textContent = b.name; btn.dataset.type = b.type;
   btn.addEventListener("click", () => select(b));
-  picker.appendChild(btn);
+  $("#picker-blog").appendChild(btn);
 });
 
 function select(b, preset) {
+  images.hide(); $("#blog-ui").hidden = false;
   block = b; store.set("last", b.type); blockId = uid();
   data = preset || store.get(draftKey(b.type)) || defaults(b);
-  picker.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.type === b.type)));
+  pick(b.type);
   $("#form-title").textContent = b.name;
   $("#form-blurb").textContent = b.blurb + "  Strapi component: " + b.strapi;
   const help = SCRIPT_HELP[b.type];
@@ -306,7 +360,7 @@ window.addEventListener("message", e => {
 
 function previewDoc(snippet) {
   return `<!doctype html><html${dark ? ' data-theme="dark"' : ""}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap">
 <style>body{margin:0;background:${dark ? "#0b0f1c" : "#fff4ee"};color:${dark ? "#d6dae0" : "#252525"};font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:24px}
 .col{max-width:760px;margin:0 auto;padding:28px 16px}.ctx{margin:0 0 24px;opacity:.75}.ctx:last-child{margin:0}</style></head>
 <body><div class="col"><p class="ctx">Article text before the block sits here, so spacing and type match the live post.</p>
@@ -369,7 +423,22 @@ $("#import-go").addEventListener("click", () => {
   dlg.close(); select(b, { ...defaults(b), ...got.data }); say("Loaded " + b.name);
 });
 
-select(block);
+const images = initNewsletterImages({ $, store, say });
+images.types.forEach(({ type, name }) => {
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.textContent = name; btn.dataset.type = "img:" + type;
+  btn.addEventListener("click", () => showImage(type));
+  $("#picker-img").appendChild(btn);
+});
+function showImage(type) {
+  $("#blog-ui").hidden = true;
+  store.set("last", "img:" + type);
+  pick("img:" + type);
+  images.show(type);
+}
+const last = store.get("last");
+if (typeof last === "string" && last.startsWith("img:") && images.types.some(t => "img:" + t.type === last)) { select(block); showImage(last.slice(4)); }
+else select(block);
 </script>
 </body>
 </html>
