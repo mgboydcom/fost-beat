@@ -20,7 +20,7 @@ Each FOSTBeat newsletter issue on beehiiv needs a post thumbnail (1200×630) and
 - **File names** are built from the newsletter, issue or headline, and image type.
 - **Alt text** is filled in from the fields, is editable, and has **Copy alt text**.
 - **Drafts** are kept in the browser per image type and newsletter. Nothing leaves the browser: no server, no keys.
-- **Logos:** the FOSTBeat logo's light, dark and white files are copied from the canvas into `blog-blocks/assets/`.
+- **Logos:** the FOSTBeat logo's light, dark and white files are copied into `blog-blocks/assets/`, from the FOSTBeat design system's versions with inline colours (the canvas copies draw all black).
 - The existing blog blocks and their HTML output are unchanged.
 
 ## Capabilities

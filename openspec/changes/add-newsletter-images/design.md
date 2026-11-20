@@ -55,7 +55,7 @@ Coordinates come straight from the canvas designs: the thumbnail has 64px paddin
 
 `fitHeadline` tries font sizes from the start size down to the minimum in 2px steps, and takes the first size where the text fits in 3 lines. Line height is 1.08 on the thumbnail and 1.1 on the banner.
 - Thumbnail: from 68px down to 48px, 820px wide.
-- Banner: from 54px down to 40px, column width 1200 − 2×56 − 56 − 520 = 568px.
+- Banner: from 54px down to 40px, column width 1200 − 2×56 − 56 − 520 = 512px.
 
 If even the minimum needs more lines, the third line ends with "…" and the result carries `overflow: 'headline'`. The standfirst works the same way: 22px over 32px lines, 2 lines, `overflow: 'standfirst'`. The page turns overflows into "Shorten the headline" / "Shorten the standfirst" messages.
 
@@ -97,7 +97,7 @@ This reuses the FOSTBeat ME dashboard's feature-image approach, copied rather th
 - The photo is never stored.
 
 **9. Logos in the repository.**
-The three SVGs go to `blog-blocks/assets/fostbeat-logo-light.svg`, `-dark.svg` and `-white.svg`, copied byte for byte from the canvas's uploads. They are drawn with `drawImage` at 250px wide on the thumbnail, keeping their 429:97 ratio.
+The three SVGs go to `blog-blocks/assets/fostbeat-logo-light.svg`, `-dark.svg` and `-white.svg`. Found while building: the canvas's logo uploads (and the files the FOSTBeat design system lists under Logos) are one identical file with `class="cls-…"` colours whose stylesheet was stripped on upload, so all three draw black. The design system also holds versions of the same three logos with their colours written inline (uploaded 30 October, 16:35, not listed in its Logos group); those are the ones copied, byte for byte. They are drawn with `drawImage` at 250px wide on the thumbnail, keeping their 429:97 ratio.
 
 ## Risks / Trade-offs
 

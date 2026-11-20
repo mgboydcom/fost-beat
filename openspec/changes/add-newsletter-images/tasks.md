@@ -2,17 +2,17 @@
 
 ## 1. Assets and fonts
 
-- [ ] 1.1 Copy the three FOSTBeat logo SVGs from the branding canvas into `blog-blocks/assets/` (`fostbeat-logo-light.svg`, `-dark.svg`, `-white.svg`), unchanged, and add Outfit 600 to the Google Fonts link in `blog-blocks/index.html`. Verify that each file opens at 429×97 with no scripts or external references, and that the page loads Outfit 600.
+- [x] 1.1 Copy the three FOSTBeat logo SVGs into `blog-blocks/assets/` (`fostbeat-logo-light.svg`, `-dark.svg`, `-white.svg`), unchanged, from the FOSTBeat design system's versions with inline colours (the canvas copies have lost their stylesheet and draw all black; see design decision 9), and add Outfit 600 to the Google Fonts link in `blog-blocks/index.html`. Verify that each file opens at 429×97 with no scripts or external references, and that the page loads Outfit 600.
 
 ## 2. Drawing module
 
-- [ ] 2.1 Add `blog-blocks/newsletter-images.js` with `THEMES` (copied from the canvas's `Thumb` and `Banner`), `wrap`, `fitHeadline`, `fitStandfirst`, `issueDate`, `fileName`, `altText` and the five motif painters (design decisions 1–3, 6). Verify with a Node script for the pure functions:
+- [x] 2.1 Add `blog-blocks/newsletter-images.js` with `THEMES` (copied from the canvas's `Thumb` and `Banner`), `wrap`, `fitHeadline`, `fitStandfirst`, `issueDate`, `fileName`, `altText` and the five motif painters (design decisions 1–3, 6). Verify with a Node script for the pure functions:
   - wrapping, using a stub `measureText`;
   - the headline size stepping down to its minimum, then the ellipsis and the overflow flag;
   - the date "20 NOV 2026";
   - file names with and without an issue number;
   - the alt text for both types.
-- [ ] 2.2 Add `drawThumbnail` and `drawBanner` (design decision 1), each taking a context, inputs, the theme, the loaded logo and photo, and a scale. Verify in headless Chromium that both draw at 1× and 2× sizes. Sample pixel colours for each newsletter's background, The Drum's bar gradient, and the banner's photo area holding the cropped photo.
+- [x] 2.2 Add `drawThumbnail` and `drawBanner` (design decision 1), each taking a context, inputs, the theme, the loaded logo and photo, and a scale. Verify in headless Chromium that both draw at 1× and 2× sizes. Sample pixel colours for each newsletter's background, The Drum's bar gradient, and the banner's photo area holding the cropped photo.
 
 ## 3. Generator page
 
