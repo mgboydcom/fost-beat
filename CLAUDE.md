@@ -14,3 +14,8 @@ with **Coolify** on Platformable's OVHcloud VPS:
 - Code reaches the server by merging to `main`: Coolify deploys automatically (or with its Deploy button). Do not
   write `git pull` or `docker compose up` steps for production.
 - HTTPS comes from Coolify's proxy, and backups from Coolify, not Caddy or host crontabs.
+
+## OpenSpec
+
+- OpenSpec 2.x is set up per repository: skills live in `.agents/skills/` and are linked from `.claude/skills/` (`/openspec-propose`, `/openspec-apply-change`, `/openspec-archive-change`, …). There are no `/opsx:*` command files.
+- After upgrading the CLI, refresh with `openspec init --tools claude --scope project --no-animation .` and commit the result, so every Platformable repository stays on the same setup.
