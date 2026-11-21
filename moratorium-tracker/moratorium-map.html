@@ -37,6 +37,8 @@
       --fm-adopted: #c0392b; --fm-proposed: #e08a1e; --fm-extended: #7b3fa0;
       --fm-lifted: #2e8b57; --fm-rejected: #6b7280; --fm-other: #2563eb;
       --fm-ban: #7f1d1d;
+      --fm-ocean: #b5d8e2;                                   /* shown beyond the edge of the world */
+      --fm-tiles: saturate(.85) brightness(1.05) contrast(.95);
       font-family: inherit; color: var(--fm-ink); background: var(--fm-bg);
       border: 1px solid var(--fm-line); border-radius: 10px; overflow: hidden;
       max-width: 100%; box-sizing: border-box;
@@ -54,9 +56,10 @@
     #fost-mora .fm-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
     /* The map fills the rest of the frame, so the iframe's height sets the map size. */
     #fost-mora { display: flex; flex-direction: column; height: 100vh; min-height: 520px; }
-    #fost-mora .fm-map { flex: 1 1 auto; min-height: 300px; width: 100%; margin-top: 10px; z-index: 0; }
-    /* Mute the basemap so the coloured markers stand out. */
-    #fost-mora .leaflet-tile-pane { filter: grayscale(1) brightness(1.04) contrast(.88); }
+    #fost-mora .fm-map { flex: 1 1 auto; min-height: 300px; width: 100%; margin-top: 10px; z-index: 0;
+      background: var(--fm-ocean); }
+    /* Soften the basemap (keeps the light-blue sea, tones down roads and parks) so the markers stand out. */
+    #fost-mora .leaflet-tile-pane { filter: var(--fm-tiles); }
     #fost-mora .fm-foot { padding: 8px 16px; font-size: .75rem; color: var(--fm-muted);
       border-top: 1px solid var(--fm-line); }
     #fost-mora .fm-foot a { color: inherit; }
@@ -103,11 +106,24 @@
       return css.getPropertyValue('--fm-' + key).trim();
     }
 
-    var map = L.map(root.querySelector('.fm-map'), { scrollWheelZoom: false, worldCopyJump: true })
-      .setView([30, 0], 2);
+    // One copy of the world only: no wrapping and no panning past its edges. On wide screens any
+    // space beside the world is plain sea colour (--fm-ocean).
+    var WORLD = L.latLngBounds([[-58, -180], [84, 180]]);
+    var map = L.map(root.querySelector('.fm-map'), {
+      scrollWheelZoom: false, worldCopyJump: false,
+      maxBounds: WORLD, maxBoundsViscosity: 1
+    });
+    function fitWorldWidth() {
+      // Furthest zoom-out: the largest whole zoom level at which the world fits the map's width
+      // (whole levels keep tiles sharp and seam-free), but never smaller than zoom 1.
+      map.setMinZoom(Math.max(1, Math.floor(Math.log2(map.getSize().x / 256))));
+    }
+    map.setView([30, 0], 2);
+    fitWorldWidth();
+    map.on('resize', fitWorldWidth);
     // Standard OpenStreetMap tiles: free and keyless (CARTO's basemaps now need an API key).
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
+      maxZoom: 19, noWrap: true, bounds: [[-90, -180], [90, 180]],
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
     map.on('focus', function () { map.scrollWheelZoom.enable(); });

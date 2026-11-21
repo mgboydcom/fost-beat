@@ -44,6 +44,8 @@ The map fills whatever height the iframe gives it. It reads the sheet on every p
 every 10 minutes while open. Dots are coloured by `action_type` (adopted, proposed, extended,
 lifted, rejected, ban; anything else is blue), with filter buttons and counts above the map.
 Several actions in one place share one dot.
+Only one copy of the world is shown (no repeats when panning or zooming out); the sea colour
+and basemap softening are the `--fm-ocean` and `--fm-tiles` CSS variables at the top of the page.
 
 The old address, `/fost-beat/moratorium-map.html`, redirects here.
 
