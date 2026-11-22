@@ -8,7 +8,7 @@
         "width": 620,
         "color": 6
       },
-      "id": "9e96e6f3-ba77-4236-a5ec-0b2f850acd8d",
+      "id": "20258864-653e-4389-8706-2232bf577b25",
       "name": "Setup notes",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -30,7 +30,7 @@
           ]
         }
       },
-      "id": "7d294678-1f44-4b4c-97d6-e58f6fa48e47",
+      "id": "a28b23c3-fbbd-430d-8903-f229fb2e4e0f",
       "name": "Every 2 days 09:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -41,9 +41,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const cfg = {\n  // ---- EDIT THESE ----\n  notifyEmail: 'CHANGE-ME@example.com', // address that gets the run report\n  lookbackHours: 72,          // normal runs: how far back to search (runs are 48h apart)\n  fromDate: '',               // catch-up only: first day to search, 'YYYY-MM-DD'. Leave '' for normal runs\n  toDate: '',                 // catch-up only: last day to search, 'YYYY-MM-DD'. Leave '' for normal runs\n  maxItemsPerRun: 40,         // cap on records sent to Gemini per run\n  confidenceThreshold: 0.6,   // minimum classifier confidence to add or verify a row\n  matchDays: 120,             // a record matches a row whose dates are within this many days\n  model: 'gemini-flash-latest',\n  // A record is sent to Gemini only if its title/details match BOTH patterns (whole words, any case).\n  subjectPattern: String.raw`\\b(data ?cent(er|re)s?|data storage|hyperscale)\\b`,\n  pausePattern: String.raw`\\b(moratori\\w*|paus(e|es|ed|ing)|bans?|banned|banning|prohibit\\w*|temporary|freez\\w*|suspen\\w*)\\b`,\n  // --------------------\n  systemPrompt: \"You classify news items for a tracker of government actions that restrict new data centre construction anywhere in the world.\\n\\nReturn ONLY a JSON object, with no prose and no code fences.\\n\\nCOUNT as a moratorium action: a government body, regulator, planning authority or grid operator adopting, proposing, extending, lifting or rejecting a moratorium, ban, pause, freeze, or blanket refusal of new data centre permits or grid connections. Votes by residents on a ban also count.\\n\\nDO NOT count: opinion pieces or analysis with no specific new action; the rejection of a single project; bans that only cover crypto mining; general energy or efficiency rules that do not pause development; articles that only recap older actions with no new development.\\n\\nSchema:\\n{\\n  \\\"is_moratorium_action\\\": boolean,\\n  \\\"action_type\\\": \\\"adopted\\\" | \\\"proposed\\\" | \\\"extended\\\" | \\\"lifted\\\" | \\\"rejected\\\" | \\\"ban\\\" | \\\"other\\\",\\n  \\\"jurisdiction\\\": string (US places as 'City, ST' or 'County Name, ST' with the two-letter state code, e.g. 'Manatee County, FL'; US states by full name; elsewhere the official name of the place or body),\\n  \\\"level\\\": \\\"city\\\" | \\\"county\\\" | \\\"region\\\" | \\\"state\\\" | \\\"national\\\" | \\\"grid_operator\\\",\\n  \\\"country\\\": string (English name),\\n  \\\"scope\\\": string (what is paused, e.g. 'new data centres over 50 MW', or '' if unknown),\\n  \\\"effective_date\\\": string or null (YYYY-MM-DD),\\n  \\\"expiry\\\": string or null,\\n  \\\"summary\\\": string (start with 'Status: active.', 'Status: proposed.', 'Status: rejected.', 'Status: lifted.' or 'Status: expired.', then one sentence in English),\\n  \\\"confidence\\\": number between 0 and 1\\n}\\n\\nIf the item is not in English, write every field in English. If is_moratorium_action is false, the other fields can be empty strings or null.\"\n};\n\nconst DAY = 24 * 3600 * 1000;\nconst ymd = d => d.toISOString().slice(0, 10);\nlet start, end;\nif (cfg.fromDate) {\n  start = new Date(cfg.fromDate + 'T00:00:00Z');\n  end = cfg.toDate ? new Date(new Date(cfg.toDate + 'T00:00:00Z').getTime() + DAY) : new Date();\n  if (isNaN(start) || isNaN(end) || start >= end) throw new Error('fromDate/toDate must be YYYY-MM-DD, with fromDate on or before toDate');\n} else {\n  end = new Date();\n  start = new Date(end.getTime() - cfg.lookbackHours * 3600 * 1000);\n}\ncfg.windowStart = start.toISOString();\ncfg.windowEnd = end.toISOString();\ncfg.windowLabel = cfg.fromDate ? `${ymd(start)} to ${ymd(new Date(end.getTime() - 1))}` : `the last ${cfg.lookbackHours} hours`;\ncfg.legistarFrom = start.toISOString().slice(0, 19);\ncfg.legistarTo = end.toISOString().slice(0, 19);\ncfg.dayFrom = ymd(start);\ncfg.dayTo = ymd(end);\nreturn [{ json: cfg }];"
+        "jsCode": "const cfg = {\n  // ---- EDIT THESE ----\n  notifyEmail: 'CHANGE-ME@example.com', // address that gets the run report\n  lookbackHours: 72,          // normal runs: how far back to search (runs are 48h apart)\n  fromDate: '',               // catch-up only: first day to search, 'YYYY-MM-DD'. Leave '' for normal runs\n  toDate: '',                 // catch-up only: last day to search, 'YYYY-MM-DD'. Leave '' for normal runs\n  maxItemsPerRun: 40,         // cap on records sent to Gemini per run\n  confidenceThreshold: 0.6,   // minimum classifier confidence to add or verify a row\n  matchDays: 120,             // a record matches a row whose dates are within this many days\n  model: 'gemini-flash-lite-latest', // Flash Lite: free tier allows 15/min and 500/day (Flash: only 5/min and 20/day). Use the same model as the news workflow.\n  // A record is sent to Gemini only if its title/details match BOTH patterns (whole words, any case).\n  subjectPattern: String.raw`\\b(data ?cent(er|re)s?|data storage|hyperscale)\\b`,\n  pausePattern: String.raw`\\b(moratori\\w*|paus(e|es|ed|ing)|bans?|banned|banning|prohibit\\w*|temporary|freez\\w*|suspen\\w*)\\b`,\n  // --------------------\n  systemPrompt: \"You classify news items for a tracker of government actions that restrict new data centre construction anywhere in the world.\\n\\nReturn ONLY a JSON object, with no prose and no code fences.\\n\\nCOUNT as a moratorium action: a government body, regulator, planning authority or grid operator adopting, proposing, extending, lifting or rejecting a moratorium, ban, pause, freeze, or blanket refusal of new data centre permits or grid connections. Votes by residents on a ban also count.\\n\\nDO NOT count: opinion pieces or analysis with no specific new action; the rejection of a single project; bans that only cover crypto mining; general energy or efficiency rules that do not pause development; articles that only recap older actions with no new development.\\n\\nSchema:\\n{\\n  \\\"is_moratorium_action\\\": boolean,\\n  \\\"action_type\\\": \\\"adopted\\\" | \\\"proposed\\\" | \\\"extended\\\" | \\\"lifted\\\" | \\\"rejected\\\" | \\\"ban\\\" | \\\"other\\\",\\n  \\\"jurisdiction\\\": string (US places as 'City, ST' or 'County Name, ST' with the two-letter state code, e.g. 'Manatee County, FL'; US states by full name; elsewhere the official name of the place or body),\\n  \\\"level\\\": \\\"city\\\" | \\\"county\\\" | \\\"region\\\" | \\\"state\\\" | \\\"national\\\" | \\\"grid_operator\\\",\\n  \\\"country\\\": string (English name),\\n  \\\"scope\\\": string (what is paused, e.g. 'new data centres over 50 MW', or '' if unknown),\\n  \\\"effective_date\\\": string or null (YYYY-MM-DD),\\n  \\\"expiry\\\": string or null,\\n  \\\"summary\\\": string (start with 'Status: active.', 'Status: proposed.', 'Status: rejected.', 'Status: lifted.' or 'Status: expired.', then one sentence in English),\\n  \\\"confidence\\\": number between 0 and 1\\n}\\n\\nIf the item is not in English, write every field in English. If is_moratorium_action is false, the other fields can be empty strings or null.\"\n};\n\nconst DAY = 24 * 3600 * 1000;\nconst ymd = d => d.toISOString().slice(0, 10);\nlet start, end;\nif (cfg.fromDate) {\n  start = new Date(cfg.fromDate + 'T00:00:00Z');\n  end = cfg.toDate ? new Date(new Date(cfg.toDate + 'T00:00:00Z').getTime() + DAY) : new Date();\n  if (isNaN(start) || isNaN(end) || start >= end) throw new Error('fromDate/toDate must be YYYY-MM-DD, with fromDate on or before toDate');\n} else {\n  end = new Date();\n  start = new Date(end.getTime() - cfg.lookbackHours * 3600 * 1000);\n}\ncfg.windowStart = start.toISOString();\ncfg.windowEnd = end.toISOString();\ncfg.windowLabel = cfg.fromDate ? `${ymd(start)} to ${ymd(new Date(end.getTime() - 1))}` : `the last ${cfg.lookbackHours} hours`;\ncfg.legistarFrom = start.toISOString().slice(0, 19);\ncfg.legistarTo = end.toISOString().slice(0, 19);\ncfg.dayFrom = ymd(start);\ncfg.dayTo = ymd(end);\nreturn [{ json: cfg }];"
       },
-      "id": "09ef3ab7-a99f-48c8-97a9-fbc31ce85b52",
+      "id": "b24bd3aa-8a7f-4190-9f7d-e3fac60974ee",
       "name": "Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -66,7 +66,7 @@
         },
         "options": {}
       },
-      "id": "99c1b3d8-fe8e-4a4f-8ce6-b2ef303cec88",
+      "id": "4d74e045-491f-4254-9bbc-f90b5f083cd7",
       "name": "Read existing rows",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -91,7 +91,7 @@
         },
         "options": {}
       },
-      "id": "1c3af569-a359-4132-b6d5-a469ac6e70bf",
+      "id": "3c708ca5-1a99-483a-960a-67e197763bd5",
       "name": "Read watch-list",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -106,7 +106,7 @@
       "parameters": {
         "jsCode": "// One request per active place on the watch-list. Keyword matching happens later,\n// because Legistar's search is case-sensitive.\nconst cfg = $('Config').first().json;\nconst filter = `MatterLastModifiedUtc ge datetime'${cfg.legistarFrom}' and MatterLastModifiedUtc lt datetime'${cfg.legistarTo}'`;\nconst out = $('Read watch-list').all()\n  .map(i => i.json || {})\n  .filter(w => String(w.active || '').trim().toLowerCase() === 'yes' && String(w.legistar_client || '').trim())\n  .map(w => {\n    const client = String(w.legistar_client).trim();\n    return { json: {\n      client, place: String(w.jurisdiction || '').trim(), country: String(w.country || 'United States').trim(),\n      watchRow: w.row_number,\n      url: `https://webapi.legistar.com/v1/${encodeURIComponent(client)}/matters?$top=1000&$filter=${encodeURIComponent(filter)}`,\n    } };\n  });\n// Always pass something on, so the run continues (and reports) when the list is empty.\nreturn out.length ? out : [{ json: { _none: true, url: 'https://webapi.legistar.com/v1/_none_/matters?$top=1' } }];"
       },
-      "id": "6a5e3cb1-bb14-474c-88ef-6f955d54fde8",
+      "id": "c8032aa0-06bc-488f-a184-2a9dd804e089",
       "name": "Build Legistar requests",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -134,7 +134,7 @@
           }
         }
       },
-      "id": "321a7fe8-5ce9-42d5-b513-481afbc67c6d",
+      "id": "f7c6a43d-7f2e-40ca-ba7f-9fe7a895d7b1",
       "name": "Legistar matters",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -164,7 +164,7 @@
           "timeout": 60000
         }
       },
-      "id": "4e5e749f-56ff-4662-94ba-7ed8bb7f1625",
+      "id": "ed37f91b-390b-47f5-a0db-3452147665f5",
       "name": "GovInfo search",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -180,7 +180,7 @@
       "parameters": {
         "jsCode": "// Turns GovInfo bill versions into one Congress.gov lookup per bill.\nconst raw = $('GovInfo search').first();\nlet results = [];\ntry {\n  const j = raw && raw.json;\n  const body = typeof j.data === 'string' ? JSON.parse(j.data) : j;\n  results = body.results || [];\n} catch (e) { results = []; }\nconst seen = new Set();\nconst out = [];\nfor (const r of results) {\n  // e.g. BILLS-119hr9442ih -> congress 119, type hr, number 9442\n  const m = /^BILLS-(\\d+)([a-z]+?)(\\d+)[a-z]+$/.exec(r.packageId || '');\n  if (!m) continue;\n  const key = m[1] + m[2] + m[3];\n  if (seen.has(key)) continue;\n  seen.add(key);\n  out.push({ json: { congress: m[1], type: m[2], number: m[3], title: r.title || '', dateIssued: r.dateIssued || '',\n    url: `https://api.congress.gov/v3/bill/${m[1]}/${m[2]}/${m[3]}?format=json` } });\n}\nreturn out.length ? out : [{ json: { _none: true, url: 'https://api.congress.gov/v3/bill/0/hr/0?format=json' } }];"
       },
-      "id": "76afdf02-08d6-41fe-bb45-8295597c42e8",
+      "id": "2e4c9138-715e-4b92-9222-785d98ce8486",
       "name": "Federal bills",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -210,7 +210,7 @@
           }
         }
       },
-      "id": "f4c9eb99-d0ed-44e3-9b14-93492ce2458d",
+      "id": "e35311a1-8e50-4647-b95d-2d6ebbbb8ea3",
       "name": "Congress.gov bills",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -257,7 +257,7 @@
           "timeout": 60000
         }
       },
-      "id": "abbaa271-d9c6-4735-bd32-a9e0d377760c",
+      "id": "28612a2c-1c07-461e-8879-130026ba844d",
       "name": "Open States search",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -273,7 +273,7 @@
       "parameters": {
         "jsCode": "// Collects records from every source, keeps those that mention data centres AND a pause word,\n// and builds the Gemini prompt for each. Every item carries the run's source statistics.\nconst cfg = $('Config').first().json;\nconst lc = s => String(s || '').toLowerCase();\nconst subjectRe = new RegExp(cfg.subjectPattern, 'i'), pauseRe = new RegExp(cfg.pausePattern, 'i');\nconst stats = {};\nconst src = name => (stats[name] = stats[name] || { found: 0, gated: 0, errors: 0, firstError: '' });\nconst fail = (name, msg) => { const s = src(name); s.errors++; if (!s.firstError) s.firstError = String(msg).slice(0, 300); };\nconst parse = item => {\n  const j = (item && item.json) || {};\n  if (j.error) return { error: j.error.message || j.error.description || JSON.stringify(j.error) };\n  try { return { body: typeof j.data === 'string' ? JSON.parse(j.data) : j }; } catch (e) { return { error: 'unreadable response' }; }\n};\nconst records = [];\n\n// Legistar: requests and responses pair up by position.\nconst reqs = $('Build Legistar requests').all();\nconst resps = $('Legistar matters').all();\nconst watch = [];\nreqs.forEach((req, i) => {\n  if (req.json._none) return;\n  const r = parse(resps[i]);\n  src('legistar');\n  if (r.error || !Array.isArray(r.body)) {\n    const msg = r.error || (r.body && (r.body.ExceptionMessage || r.body.Message)) || 'no data';\n    fail('legistar', `${req.json.place}: ${msg}`);\n    watch.push({ watchRow: req.json.watchRow, place: req.json.place, error: String(msg).slice(0, 200) });\n    return;\n  }\n  watch.push({ watchRow: req.json.watchRow, place: req.json.place, error: '' });\n  for (const m of r.body) {\n    stats.legistar.found++;\n    records.push({\n      source: 'legistar', place: req.json.place, country: req.json.country || 'United States', level: '',\n      title: m.MatterTitle || m.MatterName || '', body: [m.MatterName, m.MatterTitle].filter(Boolean).join(' - '),\n      date: String(m.MatterAgendaDate || m.MatterIntroDate || m.MatterLastModifiedUtc || '').slice(0, 10),\n      stage: [m.MatterTypeName && m.MatterTypeName.trim(), m.MatterStatusName].filter(Boolean).join(': '),\n      url: `https://${req.json.client}.legistar.com/LegislationDetail.aspx?ID=${m.MatterId}&GUID=${m.MatterGuid}`,\n    });\n  }\n});\n\n// Federal bills: GovInfo found them, Congress.gov gives the latest action.\nconst fedReqs = $('Federal bills').all();\nconst fedResps = $('Congress.gov bills').all();\nconst gi = parse($('GovInfo search').first());\nsrc('federal');\nif (gi.error) fail('federal', 'GovInfo: ' + gi.error);\nelse if (gi.body && gi.body.error) fail('federal', 'GovInfo: ' + (gi.body.error.message || JSON.stringify(gi.body.error)));\nfedReqs.forEach((req, i) => {\n  if (req.json._none) return;\n  stats.federal.found++;\n  const r = parse(fedResps[i]);\n  const bill = (r.body && r.body.bill) || {};\n  if (r.error) fail('federal', 'Congress.gov: ' + r.error);\n  const la = bill.latestAction || {};\n  records.push({\n    source: 'congress', place: 'United States', country: 'United States', level: 'national', number: req.json.number,\n    title: bill.title || req.json.title, body: bill.title || req.json.title,\n    date: la.actionDate || req.json.dateIssued || '',\n    stage: la.text ? `${la.text} (${la.actionDate})` : 'introduced',\n    url: bill.legislationUrl || `https://www.congress.gov/bill/${req.json.congress}th-congress/${req.json.type === 's' ? 'senate' : 'house'}-bill/${req.json.number}`,\n  });\n});\n\n// State bills from Open States.\nconst os = parse($('Open States search').first());\nsrc('openstates');\nif (os.error) fail('openstates', os.error);\nelse if (os.body && os.body.detail) fail('openstates', os.body.detail);\nelse for (const b of (os.body && os.body.results) || []) {\n  stats.openstates.found++;\n  const j = b.jurisdiction || {};\n  records.push({\n    source: 'openstates', place: j.name || '', country: 'United States', level: 'state',\n    number: (String(b.identifier || '').match(/\\d+/) || [''])[0],\n    title: b.title || '', body: [b.identifier, b.title].filter(Boolean).join(' - '),\n    date: String(b.latest_action_date || b.first_action_date || '').slice(0, 10),\n    stage: b.latest_action_description ? `${b.latest_action_description} (${String(b.latest_action_date || '').slice(0, 10)})` : '',\n    url: b.openstates_url || '',\n  });\n}\n\n// Keyword gate, then cap.\nconst gated = records.filter(r => subjectRe.test(r.title + ' ' + r.body) && pauseRe.test(r.title + ' ' + r.body));\nfor (const r of gated) src(r.source === 'congress' ? 'federal' : r.source).gated++;\nconst statsKey = s => (s === 'congress' ? 'federal' : s);\nconst limited = gated.slice(0, cfg.maxItemsPerRun);\nconst notChecked = gated.length - limited.length;\nconst meta = { _stats: stats, _watch: watch, _notChecked: notChecked };\nconst out = limited.map(r => ({ json: { ...r, statsKey: statsKey(r.source), ...meta,\n  prompt: `Official ${r.source === 'legistar' ? 'council agenda record' : r.level === 'state' ? 'state bill' : 'federal bill'} for ${r.place}, ${r.country}.\\nTitle: ${r.title}\\nDetails: ${r.body}\\nLatest step: ${r.stage}\\nDate: ${r.date}\\nURL: ${r.url}` } }));\nreturn out.length ? out : [{ json: { _none: true, ...meta } }];"
       },
-      "id": "3e88ec0b-64e9-4544-ab2e-90cc121402b6",
+      "id": "b6ac91b1-e4d0-4ec5-b7fb-0747fc8728a2",
       "name": "Normalise & gate",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -307,7 +307,7 @@
           }
         }
       },
-      "id": "e60e4bea-f54b-414d-b42d-a91d957f092b",
+      "id": "cca2a07a-12a6-40fc-9005-e8a737211dad",
       "name": "Classify with Gemini",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -325,7 +325,7 @@
       "parameters": {
         "jsCode": "// Google's own error messages are kept (neverError), so n8n's built-in retry never fires.\n// Instead, calls that failed with a server error (5xx, e.g. 503 \"overloaded\") are sent once more.\nconst cands = $('Normalise & gate').all().map(i => i.json);\nconst out = [];\n$('Classify with Gemini').all().forEach((a, idx) => {\n  const e = a.json && a.json.error;\n  if (cands[idx] && !cands[idx]._none && e && Number(e.code) >= 500) out.push({ json: { idx, prompt: cands[idx].prompt } });\n});\nreturn out.length ? out : [{ json: { _none: true } }];"
       },
-      "id": "110074d3-6143-40aa-a72e-447da07fc2ba",
+      "id": "e7046211-5cb9-47d7-9d27-4cf1c478d13f",
       "name": "Gemini retries",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -359,7 +359,7 @@
           }
         }
       },
-      "id": "0ae1fda8-f203-4bbe-8df3-a8eae9711555",
+      "id": "05d3adeb-8219-4da9-9492-eedae7c0122c",
       "name": "Classify again",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -374,7 +374,7 @@
       "parameters": {
         "jsCode": "// Reads Gemini's answers, then for each confirmed action either verifies the matching row,\n// adds a new officially verified row, or reports an ambiguous match.\nconst cfg = $('Config').first().json;\nconst cands = $('Normalise & gate').all().map(i => i.json);\nconst answers = $('Classify with Gemini').all().map(i => i.json || {});\n// Replace answers that were retried after a server error.\nconst retried = $('Gemini retries').all();\n$('Classify again').all().forEach((a, k) => { const r = retried[k] && retried[k].json; if (r && !r._none) answers[r.idx] = a.json || {}; });\nconst meta = cands[0] || {};\nconst stats = JSON.parse(JSON.stringify(meta._stats || {}));\nfor (const s of Object.values(stats)) { s.confirmed = 0; s.added = 0; s.verified = 0; }\nconst report = { windowLabel: cfg.windowLabel, stats, notChecked: meta._notChecked || 0, ambiguous: [],\n  geminiErrors: 0, firstGeminiError: '', watch: meta._watch || [] };\n\nconst DAY = 24 * 3600 * 1000;\nconst lc = s => String(s || '').toLowerCase().trim();\nconst place = s => lc(s).replace(/^(city|town|village|county) of /, '').replace(/[^a-z0-9, ]/g, '').replace(/\\s+/g, ' ');\nconst group = t => (['adopted', 'ban'].includes(lc(t)) ? 'adopted' : lc(t));\nconst days = (a, b) => Math.abs(new Date(a).getTime() - new Date(b).getTime()) / DAY;\n\nconst rows = $('Read existing rows').all().map(i => i.json || {}).filter(r => r.row_number);\nconst out = [];\nconst touched = new Set();      // rows already updated in this run\nconst addedKeys = new Set();    // actions already added in this run\n\n// Bills are matched on their number, or failing that on distinctive title words.\nconst STOP = new Set('a an and the of for on in to by with from new data center centers centre centres datacenter datacenters moratorium moratoriums act bill pause ban bans temporary relating establishing establish provide provides development facilities facility'.split(' '));\nconst words = s => new Set(lc(s).replace(/[^a-z0-9 ]/g, ' ').split(/\\s+/).filter(w => w.length > 3 && !STOP.has(w)));\nconst rowText = r => [r.headline, r.summary, r.scope].join(' ');\nconst sameBill = (c, r) => c.number ? new RegExp('(^|[^0-9])' + c.number + '([^0-9]|$)').test(rowText(r)) : false;\nconst shared = (c, r) => { const a = words(c.title), b = words(rowText(r)); let n = 0; for (const w of a) if (b.has(w)) n++; return n; };\n\n// Newest record first: when several records describe the same action, the most advanced stage wins.\nconst order = cands.map((c, idx) => idx).sort((x, y) => String(cands[y].date || '').localeCompare(String(cands[x].date || '')));\norder.forEach(idx => {\n  const c = cands[idx];\n  if (c._none) return;\n  const a = answers[idx] || {};\n  if (a.error) {\n    report.geminiErrors++;\n    if (!report.firstGeminiError) {\n      // Put the limit that was hit (e.g. \"Quota exceeded for metric: ... limit: 20\") first, so it survives the cut.\n      const msg = String(a.error.message || '');\n      const quota = (msg.match(/Quota exceeded for metric:[^*]*/g) || []).join(' ').trim();\n      report.firstGeminiError = [a.error.code, a.error.status, quota || msg].filter(Boolean).join(' ').slice(0, 500);\n    }\n    return;\n  }\n  const parts = (a.candidates && a.candidates[0] && a.candidates[0].content && a.candidates[0].content.parts) || [];\n  let g;\n  try { g = JSON.parse(parts.filter(p => p && p.text && !p.thought).map(p => p.text).join('').replace(/```json|```/g, '').trim()); } catch (e) { return; }\n  if (Array.isArray(g)) g = g[0];\n  if (!g || !g.is_moratorium_action || (Number(g.confidence) || 0) < cfg.confidenceThreshold) return;\n  const st = stats[c.statsKey]; st.confirmed++;\n\n  // The official source decides the place; Gemini decides what happened.\n  const level = c.level || lc(g.level) || '';\n  const action = lc(g.action_type) || 'other';\n  const recDate = g.effective_date || c.date;\n  const isNational = level === 'national';\n  let matches = rows.filter(r =>\n    lc(r.country) === lc(c.country) &&\n    (isNational ? lc(r.level) === 'national' : place(r.jurisdiction) === place(c.place)) &&\n    group(r.action_type) === group(action) &&\n    [r.effective_date, r.date_logged].some(d => d && recDate && days(d, recDate) <= cfg.matchDays));\n\n  if (c.level === 'state' || c.level === 'national') {\n    const byNumber = matches.filter(r => sameBill(c, r));\n    matches = byNumber.length ? byNumber : matches.filter(r => shared(c, r) >= 2);\n  }\n\n  const fields = { verified: 'yes', verified_by: 'official', official_source_url: c.url, stage: String(c.stage || '').slice(0, 200) };\n  if (matches.length > 1) {\n    report.ambiguous.push(`${c.place}: ${c.title} matches rows ${matches.map(r => r.row_number).join(', ')}`);\n    return;\n  }\n  if (matches.length === 1) {\n    const r = matches[0];\n    if (lc(r.verified_by) === 'person' || lc(r.verified) === 'yes' || touched.has(r.row_number)) return;\n    touched.add(r.row_number);\n    st.verified++;\n    out.push({ json: { _kind: 'update', row_number: r.row_number, ...fields, _headline: r.headline || '', _country: r.country || '' } });\n    return;\n  }\n  const key = [lc(c.country), place(c.place), group(action)].join('|');\n  if (addedKeys.has(key)) return;\n  addedKeys.add(key);\n  st.added++;\n  out.push({ json: { _kind: 'new',\n    date_logged: new Date().toISOString().slice(0, 10),\n    country: c.country, jurisdiction: c.place, level, action_type: action,\n    scope: g.scope || '', effective_date: g.effective_date || '', expiry: g.expiry || '',\n    summary: g.summary || '', priority: (['adopted', 'ban', 'extended'].includes(action) || ['national', 'state'].includes(level)) ? 'high' : 'normal',\n    confidence: g.confidence, headline: c.title, source_url: c.url, found_via: c.source,\n    ...fields } });\n});\n\n// Watch-list error column: written back for every place searched (blank clears an old error).\nfor (const w of report.watch) if (w.watchRow) out.push({ json: { _kind: 'watch', row_number: w.watchRow, last_error: w.error } });\nout.push({ json: { _kind: 'report', ...report } });\nreturn out;"
       },
-      "id": "18c8d0c2-1f91-4777-91c0-8beef7f99049",
+      "id": "c4dd6f26-f64b-4094-9369-cd8095ed822a",
       "name": "Match & decide",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -387,7 +387,7 @@
       "parameters": {
         "jsCode": "// New rows only, without the helper fields.\nreturn $input.all().filter(i => i.json._kind === 'new').map(i => {\n  const { _kind, ...row } = i.json; return { json: row };\n});"
       },
-      "id": "d7b0bff9-d9d5-46fd-bb3b-6031abcba4a2",
+      "id": "94542258-ecb0-4280-9daa-336a418fd398",
       "name": "New rows only",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -417,7 +417,7 @@
         },
         "options": {}
       },
-      "id": "cbecb9ee-28ce-4db3-b682-28396435e95b",
+      "id": "cb9aa867-43ea-4d17-8315-ea794cf486a5",
       "name": "Log new rows",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -430,7 +430,7 @@
       "parameters": {
         "jsCode": "return $input.all().filter(i => i.json._kind === 'update');"
       },
-      "id": "a6a4cea5-619d-426a-af4c-0a01e7428c74",
+      "id": "17758bb6-2d5f-404e-9b3a-4e89d5048143",
       "name": "Updates only",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -453,7 +453,7 @@
         },
         "options": {}
       },
-      "id": "e2712412-63ef-4889-82ba-a4ce784204b1",
+      "id": "d6ca2efb-1b4e-4fcb-9507-1f7ba027d23e",
       "name": "Re-read rows",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -468,7 +468,7 @@
       "parameters": {
         "jsCode": "// Only write when the row still holds the same story (rows can move if someone edits the sheet mid-run).\nconst now = new Map($('Re-read rows').all().map(i => [i.json.row_number, i.json]));\nconst lc = s => String(s || '').trim().toLowerCase();\nreturn $('Updates only').all()\n  .filter(i => { const r = now.get(i.json.row_number); return r && lc(r.headline) === lc(i.json._headline) && lc(r.country) === lc(i.json._country) && lc(r.verified_by) !== 'person'; })\n  .map(i => ({ json: { row_number: i.json.row_number, verified: i.json.verified, verified_by: i.json.verified_by,\n    official_source_url: i.json.official_source_url, stage: i.json.stage } }));"
       },
-      "id": "c9ac0169-14c5-42cf-bcd8-2ef8f6968b8b",
+      "id": "03093337-2052-41a0-84f4-651a753e5516",
       "name": "Safe updates",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -556,7 +556,7 @@
         },
         "options": {}
       },
-      "id": "18041256-3881-41ae-b811-5757212eeabb",
+      "id": "23a267ba-5890-4d9c-951c-d7d3724ff943",
       "name": "Verify rows",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -569,7 +569,7 @@
       "parameters": {
         "jsCode": "return $input.all().filter(i => i.json._kind === 'watch').map(i => ({ json: { row_number: i.json.row_number, last_error: i.json.last_error } }));"
       },
-      "id": "64207843-2840-4cff-8635-ed94d96fd3b3",
+      "id": "44967658-da53-4e66-97c0-dc9796c9fa5b",
       "name": "Watch-list errors only",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -624,7 +624,7 @@
         },
         "options": {}
       },
-      "id": "a4986ba7-4c0a-4b61-bb5d-105c7e3856a7",
+      "id": "cefbaeb1-4075-44d0-9745-2e800e4af92b",
       "name": "Save watch-list errors",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -637,7 +637,7 @@
       "parameters": {
         "jsCode": "// One email per run: what each source returned and what changed in the sheet.\nconst all = $input.all().map(i => i.json);\nconst rep = all.find(r => r._kind === 'report') || {};\nconst added = all.filter(r => r._kind === 'new');\nconst verified = all.filter(r => r._kind === 'update');\nlet written = verified.length;\ntry { written = $('Safe updates').all().length; } catch (e) { written = 0; }\nconst esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\nconst names = { legistar: 'Council agendas (Legistar)', federal: 'Federal bills (GovInfo / Congress.gov)', openstates: 'State bills (Open States)' };\nconst srcRows = Object.entries(rep.stats || {}).map(([k, s]) => `<tr><td>${esc(names[k] || k)}</td><td>${s.found}</td><td>${s.gated}</td><td>${s.confirmed}</td><td>${s.added}</td><td>${s.verified}</td><td>${s.errors}${s.firstError ? ' (' + esc(s.firstError) + ')' : ''}</td></tr>`).join('');\nconst watch = rep.watch || [];\nconst watchErr = watch.filter(w => w.error);\nconst list = (title, items) => items.length ? `<p><b>${title}</b></p><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>` : '';\nconst html = `\n  <p>Official sources searched: ${esc(rep.windowLabel)}. ${added.length} new row(s) added, ${verified.length} existing row(s) verified${written !== verified.length ? ` (${written} written; ${verified.length - written} skipped because the row changed during the run)` : ''}.</p>\n  <table style=\"border-collapse:collapse;font-family:sans-serif;font-size:13px\" border=\"1\" cellpadding=\"5\">\n    <tr style=\"background:#bba4ff\"><th>Source</th><th>Records</th><th>Passed keyword filter</th><th>Confirmed by Gemini</th><th>Added</th><th>Verified</th><th>Errors</th></tr>${srcRows}</table>\n  <p style=\"font-size:12px;color:#555\">Council agendas: ${watch.length} place(s) searched, ${watchErr.length} with errors. Gemini errors: ${rep.geminiErrors || 0}${rep.firstGeminiError ? ' (first: ' + esc(rep.firstGeminiError) + ')' : ''}.${rep.notChecked ? ` <b>${rep.notChecked} record(s) not checked</b>: maxItemsPerRun reached; rerun with a shorter date range.` : ''}</p>\n  ${list('Added', added.map(r => `${esc(r.jurisdiction)} - ${esc(r.action_type)}: <a href=\"${esc(r.official_source_url)}\">${esc(r.headline)}</a>`))}\n  ${list('Verified', verified.map(r => `Row ${r.row_number}: <a href=\"${esc(r.official_source_url)}\">${esc(r._headline)}</a>`))}\n  ${list('Ambiguous matches (not changed - check by hand)', (rep.ambiguous || []).map(esc))}\n  ${list('Watch-list places with errors', watchErr.map(w => `${esc(w.place)}: ${esc(w.error)}`))}`;\nconst problems = (rep.geminiErrors || 0) + Object.values(rep.stats || {}).reduce((n, s) => n + s.errors, 0);\nreturn [{ json: {\n  subject: `Moratorium official sources: ${added.length} added, ${written} verified${problems ? `, ${problems} error(s)` : ''}`,\n  html,\n} }];"
       },
-      "id": "4640f8a4-c499-43ea-850d-87a2f0e113b7",
+      "id": "b2ecba60-81b6-4d92-a180-1bac1ee0dc83",
       "name": "Build report",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -656,7 +656,7 @@
           "appendAttribution": false
         }
       },
-      "id": "e695420c-6387-4855-8069-b127bcde6000",
+      "id": "572e1468-0571-4159-8864-dbf95dfa8dad",
       "name": "Email report",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,

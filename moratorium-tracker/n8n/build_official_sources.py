@@ -31,7 +31,7 @@ CONFIG_CODE = """const cfg = {
   maxItemsPerRun: 40,         // cap on records sent to Gemini per run
   confidenceThreshold: 0.6,   // minimum classifier confidence to add or verify a row
   matchDays: 120,             // a record matches a row whose dates are within this many days
-  model: 'gemini-flash-latest',
+  model: 'gemini-flash-lite-latest', // Flash Lite: free tier allows 15/min and 500/day (Flash: only 5/min and 20/day). Use the same model as the news workflow.
   // A record is sent to Gemini only if its title/details match BOTH patterns (whole words, any case).
   subjectPattern: String.raw`\\b(data ?cent(er|re)s?|data storage|hyperscale)\\b`,
   pausePattern: String.raw`\\b(moratori\\w*|paus(e|es|ed|ing)|bans?|banned|banning|prohibit\\w*|temporary|freez\\w*|suspen\\w*)\\b`,

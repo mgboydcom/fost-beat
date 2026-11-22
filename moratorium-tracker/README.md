@@ -187,7 +187,9 @@ counts, the rows added and verified, ambiguous matches, and watch-list places th
 3. **GovInfo search** and **Congress.gov bills**: one *Query Auth* credential, Name `api_key`,
    Value the api.data.gov key.
 4. **Open States search**: a *Header Auth* credential, Name `X-API-KEY`, Value the Open States key.
-5. **Classify with Gemini** and **Classify again**: the news workflow's Gemini credential.
+5. **Classify with Gemini** and **Classify again**: the news workflow's Gemini credential. In
+   **Config**, `model` should be the same model as the news workflow's. The default is Flash Lite,
+   because on the free tier Flash allows only 5 requests a minute and 20 a day, which one run exceeds.
 6. The six Google Sheets nodes: your Google account. In **Verify rows** and **Save watch-list
    errors**, check that *Column to match on* is `row_number`; n8n clears it whenever the Document
    is changed. **Email report**: Gmail.
