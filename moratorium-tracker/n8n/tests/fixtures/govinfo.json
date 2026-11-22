@@ -1,0 +1,98 @@
+{
+ "count": 4,
+ "offsetMark": "AoJw4KWgyZ4DMUJJTExTLTExOWhyODY0NmVo",
+ "results": [
+  {
+   "title": "Artificial Intelligence Data Center Moratorium Act",
+   "packageId": "BILLS-119hr9442ih",
+   "granuleId": null,
+   "lastModified": "2026-10-30T02:05:17Z",
+   "governmentAuthor": [
+    "Congress",
+    "House of Representatives"
+   ],
+   "dateIssued": "2026-06-24",
+   "collectionCode": "BILLS",
+   "dateIngested": "2026-06-25",
+   "download": {
+    "premisLink": "https://api.govinfo.gov/packages/BILLS-119hr9442ih/premis",
+    "xmlLink": "https://api.govinfo.gov/packages/BILLS-119hr9442ih/xml",
+    "txtLink": "https://api.govinfo.gov/packages/BILLS-119hr9442ih/htm",
+    "zipLink": "https://api.govinfo.gov/packages/BILLS-119hr9442ih/zip",
+    "modsLink": "https://api.govinfo.gov/packages/BILLS-119hr9442ih/mods",
+    "pdfLink": "https://api.govinfo.gov/packages/BILLS-119hr9442ih/pdf"
+   },
+   "relatedLink": "https://api.govinfo.gov/related/BILLS-119hr9442ih",
+   "resultLink": "https://api.govinfo.gov/packages/BILLS-119hr9442ih/summary"
+  },
+  {
+   "title": "Power and Water for Families Act of 2026",
+   "packageId": "BILLS-119hr9419ih",
+   "granuleId": null,
+   "lastModified": "2026-10-30T02:01:35Z",
+   "governmentAuthor": [
+    "Congress",
+    "House of Representatives"
+   ],
+   "dateIssued": "2026-06-24",
+   "collectionCode": "BILLS",
+   "dateIngested": "2026-07-15",
+   "download": {
+    "premisLink": "https://api.govinfo.gov/packages/BILLS-119hr9419ih/premis",
+    "xmlLink": "https://api.govinfo.gov/packages/BILLS-119hr9419ih/xml",
+    "txtLink": "https://api.govinfo.gov/packages/BILLS-119hr9419ih/htm",
+    "zipLink": "https://api.govinfo.gov/packages/BILLS-119hr9419ih/zip",
+    "modsLink": "https://api.govinfo.gov/packages/BILLS-119hr9419ih/mods",
+    "pdfLink": "https://api.govinfo.gov/packages/BILLS-119hr9419ih/pdf"
+   },
+   "relatedLink": "https://api.govinfo.gov/related/BILLS-119hr9419ih",
+   "resultLink": "https://api.govinfo.gov/packages/BILLS-119hr9419ih/summary"
+  },
+  {
+   "title": "National Defense Authorization Act for Fiscal Year 2027",
+   "packageId": "BILLS-119s4784rs",
+   "granuleId": null,
+   "lastModified": "2026-10-30T02:04:14Z",
+   "governmentAuthor": [
+    "Congress",
+    "Senate"
+   ],
+   "dateIssued": "2026-06-15",
+   "collectionCode": "BILLS",
+   "dateIngested": "2026-06-16",
+   "download": {
+    "premisLink": "https://api.govinfo.gov/packages/BILLS-119s4784rs/premis",
+    "xmlLink": "https://api.govinfo.gov/packages/BILLS-119s4784rs/xml",
+    "txtLink": "https://api.govinfo.gov/packages/BILLS-119s4784rs/htm",
+    "zipLink": "https://api.govinfo.gov/packages/BILLS-119s4784rs/zip",
+    "modsLink": "https://api.govinfo.gov/packages/BILLS-119s4784rs/mods",
+    "pdfLink": "https://api.govinfo.gov/packages/BILLS-119s4784rs/pdf"
+   },
+   "relatedLink": "https://api.govinfo.gov/related/BILLS-119s4784rs",
+   "resultLink": "https://api.govinfo.gov/packages/BILLS-119s4784rs/summary"
+  },
+  {
+   "title": "Agriculture, Rural Development, Food and Drug Administration, and Related Agency Appropriations Act, 2027",
+   "packageId": "BILLS-119hr8646eh",
+   "granuleId": null,
+   "lastModified": "2026-10-30T02:13:20Z",
+   "governmentAuthor": [
+    "Congress",
+    "House of Representatives"
+   ],
+   "dateIssued": "2026-06-04",
+   "collectionCode": "BILLS",
+   "dateIngested": "2026-06-09",
+   "download": {
+    "premisLink": "https://api.govinfo.gov/packages/BILLS-119hr8646eh/premis",
+    "xmlLink": "https://api.govinfo.gov/packages/BILLS-119hr8646eh/xml",
+    "txtLink": "https://api.govinfo.gov/packages/BILLS-119hr8646eh/htm",
+    "zipLink": "https://api.govinfo.gov/packages/BILLS-119hr8646eh/zip",
+    "modsLink": "https://api.govinfo.gov/packages/BILLS-119hr8646eh/mods",
+    "pdfLink": "https://api.govinfo.gov/packages/BILLS-119hr8646eh/pdf"
+   },
+   "relatedLink": "https://api.govinfo.gov/related/BILLS-119hr8646eh",
+   "resultLink": "https://api.govinfo.gov/packages/BILLS-119hr8646eh/summary"
+  }
+ ]
+}
