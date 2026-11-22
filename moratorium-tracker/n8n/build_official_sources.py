@@ -260,7 +260,12 @@ order.forEach(idx => {
   const a = answers[idx] || {};
   if (a.error) {
     report.geminiErrors++;
-    if (!report.firstGeminiError) report.firstGeminiError = String([a.error.code, a.error.status, a.error.message].filter(Boolean).join(' ')).slice(0, 300);
+    if (!report.firstGeminiError) {
+      // Put the limit that was hit (e.g. "Quota exceeded for metric: ... limit: 20") first, so it survives the cut.
+      const msg = String(a.error.message || '');
+      const quota = (msg.match(/Quota exceeded for metric:[^*]*/g) || []).join(' ').trim();
+      report.firstGeminiError = [a.error.code, a.error.status, quota || msg].filter(Boolean).join(' ').slice(0, 500);
+    }
     return;
   }
   const parts = (a.candidates && a.candidates[0] && a.candidates[0].content && a.candidates[0].content.parts) || [];
