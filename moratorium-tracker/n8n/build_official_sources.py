@@ -17,7 +17,7 @@ SETUP_NOTE = """## Moratorium official sources - setup
 2. **GovInfo search** and **Congress.gov bills**: create one *Query Auth* credential. Name: `api_key`, Value: your api.data.gov key (free at api.data.gov/signup). Use it in both nodes.
 3. **Open States search**: create a *Header Auth* credential. Name: `X-API-KEY`, Value: your Open States key (free at openstates.org/accounts/signup).
 4. **Classify with Gemini**: reuse the news workflow's Header Auth credential (`x-goog-api-key`).
-5. **Read existing rows**, **Read watch-list**, **Re-read rows**, **Log new rows**, **Verify rows** and **Save watch-list errors**: connect your Google account. **Email report**: connect Gmail.
+5. **Read existing rows**, **Read watch-list**, **Re-read rows**, **Log new rows**, **Verify rows** and **Save watch-list errors**: connect your Google account. In **Verify rows** and **Save watch-list errors**, check that *Column to match on* is `row_number` (n8n clears it if the Document is changed). **Email report**: connect Gmail.
 6. Test with **Execute workflow**, then switch it to **Active**.
 
 Runs every 2 days at 09:00 Madrid time (2 hours after the news workflow). Places are searched only when `active` is `yes` on the Legistar watch-list tab. For a catch-up run, set `fromDate` / `toDate` in Config."""
@@ -367,6 +367,13 @@ tab = lambda name: {"__rl": True, "mode": "name", "value": name}
 text_response = {"response": {"response": {"neverError": True, "responseFormat": "text"}}}
 
 
+def match_schema(columns):
+    """Column list for an update node, so n8n offers row_number as the column to match on after import."""
+    field = lambda c, match: {"id": c, "displayName": c, "required": False, "defaultMatch": False, "display": True,
+                              "type": "string", "canBeUsedToMatch": match, "readOnly": c == "row_number", "removed": False}
+    return [field("row_number", True)] + [field(c, False) for c in columns]
+
+
 def code(name, js, pos, **extra):
     return {"parameters": {"jsCode": js}, "id": nid(), "name": name, "type": "n8n-nodes-base.code",
             "typeVersion": 2, "position": pos, **extra}
@@ -438,12 +445,14 @@ nodes = [
     read("Re-read rows", "Moratoriums", [3240, -80]),
     code("Safe updates", SAFE_UPDATES_CODE, [3460, -80]),
     {"parameters": {"operation": "update", "documentId": sheet_doc, "sheetName": tab("Moratoriums"),
-        "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": ["row_number"], "schema": []}, "options": {}},
+        "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": ["row_number"],
+                    "schema": match_schema(["verified", "verified_by", "official_source_url", "stage"])}, "options": {}},
      "id": nid(), "name": "Verify rows", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5, "position": [3680, -80]},
     # Branch 3: watch-list errors
     code("Watch-list errors only", WATCH_ONLY_CODE, [3020, 100]),
     {"parameters": {"operation": "update", "documentId": sheet_doc, "sheetName": tab("Legistar watch-list"),
-        "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": ["row_number"], "schema": []}, "options": {}},
+        "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": ["row_number"],
+                    "schema": match_schema(["last_error"])}, "options": {}},
      "id": nid(), "name": "Save watch-list errors", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5, "position": [3240, 100]},
     # Branch 4 (runs last): report
     code("Build report", REPORT_CODE, [3020, 280]),

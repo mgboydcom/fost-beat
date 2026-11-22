@@ -188,7 +188,9 @@ counts, the rows added and verified, ambiguous matches, and watch-list places th
    Value the api.data.gov key.
 4. **Open States search**: a *Header Auth* credential, Name `X-API-KEY`, Value the Open States key.
 5. **Classify with Gemini** and **Classify again**: the news workflow's Gemini credential.
-6. The six Google Sheets nodes: your Google account. **Email report**: Gmail.
+6. The six Google Sheets nodes: your Google account. In **Verify rows** and **Save watch-list
+   errors**, check that *Column to match on* is `row_number`; n8n clears it whenever the Document
+   is changed. **Email report**: Gmail.
 7. **Config**: replace `CHANGE-ME@example.com` with the report address.
 8. First run: set `fromDate` / `toDate` to one past week and run by hand; check each added or
    verified row against its link. Then clear the dates and switch the workflow to **Active**.
