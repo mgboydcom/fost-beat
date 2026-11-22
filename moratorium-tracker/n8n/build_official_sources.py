@@ -387,7 +387,8 @@ def code(name, js, pos, **extra):
 def read(name, tab_name, pos):
     return {"parameters": {"documentId": sheet_doc, "sheetName": tab(tab_name), "options": {}},
             "id": nid(), "name": name, "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5,
-            "position": pos, "executeOnce": True, "alwaysOutputData": True}
+            "position": pos, "executeOnce": True, "alwaysOutputData": True,
+            "retryOnFail": True, "maxTries": 3, "waitBetweenTries": 5000}
 
 
 def http(name, pos, params, **extra):
@@ -444,7 +445,8 @@ nodes = [
     code("New rows only", NEW_ONLY_CODE, [3020, -260]),
     {"parameters": {"operation": "append", "documentId": sheet_doc, "sheetName": tab("Moratoriums"),
         "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": [], "schema": []}, "options": {}},
-     "id": nid(), "name": "Log new rows", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5, "position": [3240, -260]},
+     "id": nid(), "name": "Log new rows", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5,
+     "retryOnFail": True, "maxTries": 3, "waitBetweenTries": 5000, "position": [3240, -260]},
     # Branch 2: verify existing rows (re-read first, write only the four verification columns)
     code("Updates only", UPDATES_ONLY_CODE, [3020, -80]),
     read("Re-read rows", "Moratoriums", [3240, -80]),
@@ -452,13 +454,15 @@ nodes = [
     {"parameters": {"operation": "update", "documentId": sheet_doc, "sheetName": tab("Moratoriums"),
         "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": ["row_number"],
                     "schema": match_schema(["verified", "verified_by", "official_source_url", "stage"])}, "options": {}},
-     "id": nid(), "name": "Verify rows", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5, "position": [3680, -80]},
+     "id": nid(), "name": "Verify rows", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5,
+     "retryOnFail": True, "maxTries": 3, "waitBetweenTries": 5000, "position": [3680, -80]},
     # Branch 3: watch-list errors
     code("Watch-list errors only", WATCH_ONLY_CODE, [3020, 100]),
     {"parameters": {"operation": "update", "documentId": sheet_doc, "sheetName": tab("Legistar watch-list"),
         "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": ["row_number"],
                     "schema": match_schema(["last_error"])}, "options": {}},
-     "id": nid(), "name": "Save watch-list errors", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5, "position": [3240, 100]},
+     "id": nid(), "name": "Save watch-list errors", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5,
+     "retryOnFail": True, "maxTries": 3, "waitBetweenTries": 5000, "position": [3240, 100]},
     # Branch 4 (runs last): report
     code("Build report", REPORT_CODE, [3020, 280]),
     {"parameters": {"sendTo": "={{ $('Config').first().json.notifyEmail }}", "subject": "={{ $json.subject }}",
