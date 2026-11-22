@@ -222,8 +222,16 @@
       if (row.effective_date) dates.push('<dt>Effective</dt><dd>' + esc(row.effective_date) + '</dd>');
       if (row.expiry) dates.push('<dt>Expires</dt><dd>' + esc(row.expiry) + '</dd>');
       if (row.scope) dates.push('<dt>Scope</dt><dd>' + esc(row.scope) + '</dd>');
+      if (row.stage) dates.push('<dt>Stage</dt><dd>' + esc(row.stage) + '</dd>');
+      // Verification: by an official government record (with a link to it), by a person, or not yet.
+      var official = safeUrl(row.official_source_url);
+      var isVerified = String(row.verified).toLowerCase() === 'yes';
+      var check = !isVerified ? '(unverified)'
+        : String(row.verified_by).toLowerCase() === 'official'
+          ? 'verified: official source' + (official ? ' (<a href="' + esc(official) + '" target="_blank" rel="noopener">record ↗</a>)' : '')
+          : 'verified';
       return '<span class="fm-tag" style="background:' + colorFor(row.action_type) + '">' + esc(row.action_type) + '</span>' +
-        (String(row.verified).toLowerCase() === 'yes' ? '' : '<span class="fm-meta">(unverified)</span>') +
+        '<span class="fm-meta">' + check + '</span>' +
         (dates.length ? '<dl>' + dates.join('') + '</dl>' : '') +
         (row.summary ? '<p>' + esc(row.summary) + '</p>' : '') +
         (src ? '<a href="' + esc(src) + '" target="_blank" rel="noopener">' + esc(row.headline || 'Source') + ' ↗</a>' : '');

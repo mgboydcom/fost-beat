@@ -24,8 +24,8 @@
 
 ## 4. Map and documentation
 
-- [ ] 4.1 Update `moratorium-tracker/moratorium-map.html` popups to show "(unverified)", "verified: official source" with a link, or "verified", plus `stage` when filled. Verify with a local render using rows of each kind, including an old `verified = yes` row with blank `verified_by`.
-- [ ] 4.2 Update `moratorium-tracker/README.md` with:
+- [x] 4.1 Update `moratorium-tracker/moratorium-map.html` popups to show "(unverified)", "verified: official source" with a link, or "verified", plus `stage` when filled. Verify with a local render using rows of each kind, including an old `verified = yes` row with blank `verified_by`.
+- [x] 4.2 Update `moratorium-tracker/README.md` with:
   - the official sources;
   - the new columns and what `verified_by` means;
   - how to add a place to the watch-list and find its Legistar client name;

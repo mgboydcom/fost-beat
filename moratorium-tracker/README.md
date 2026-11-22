@@ -4,9 +4,11 @@ Tracks government actions that pause or ban new data centres, and shows them on 
 [FOSTBeat blog post](https://beat.joinfost.io/blog/data-center-moratorium-tracker).
 
 ```
-n8n workflow (2-day) ──> Google Sheet ──> map page (reads the sheet live)
-                              │
-                              └──> GitHub Action (hourly) ──> geocache.json
+news workflow (n8n, 2-day, 07:00) ──────────┐
+                                            v
+official sources workflow (n8n, 2-day, 09:00) ──> Google Sheet ──> map page (reads the sheet live)
+  (adds rows and verifies existing ones)       │
+                                               └──> GitHub Action (hourly) ──> geocache.json
 ```
 
 | Path | What it is |
@@ -15,13 +17,30 @@ n8n workflow (2-day) ──> Google Sheet ──> map page (reads the sheet live
 | `geocache.json` | Saved coordinates for each place |
 | `scripts/geocode.mjs` | Looks up new places; run hourly by `.github/workflows/geocode.yml` at the repo root |
 | `n8n/data-centre-moratorium-tracker-gemini.n8n.json` | n8n workflow that finds news and adds rows to the sheet (import this) |
-| `n8n/build_workflow.py` | Generates the workflow file; edit this, then rebuild |
+| `n8n/build_workflow.py` | Generates the news workflow file; edit this, then rebuild |
+| `n8n/data-centre-moratorium-official-sources.n8n.json` | n8n workflow that searches official government sources (import this) |
+| `n8n/build_official_sources.py` | Generates the official sources workflow; shares the AI instructions with `build_workflow.py` |
+| `n8n/tests/` | Tests for the official sources workflow, with recorded API responses |
 
 ## The sheet
 
 [FOSTBeat data centre moratorium tracker](https://docs.google.com/spreadsheets/d/1Rcciv20Lippo6uRTu_Sk33c1Vul8lq2kcvz4NfkEdsk/edit),
-tab `Moratoriums`, 15 columns filled by the workflow. New rows are marked `verified = no`;
-the map labels those "(unverified)". Optional `lat` / `lng` columns override the lookup.
+tab `Moratoriums`. Optional `lat` / `lng` columns override the location lookup.
+
+**Verification columns:**
+
+| Column | Meaning |
+|---|---|
+| `verified` | `yes` or `no`. Rows from news start as `no`. |
+| `verified_by` | `official`: confirmed by an official government record, set automatically by the official sources workflow. `person`: checked by a person; set this whenever you check or correct a row by hand, and the workflows will never change that row again. Blank on rows verified before 22 Nov 2026. |
+| `official_source_url` | Link to the official record (council agenda item, bill page). |
+| `stage` | Latest official step, for example "Policy Item: Agenda Ready" or a bill's latest action. |
+
+The map shows each row as "(unverified)", "verified: official source" with a link to the record,
+or "verified".
+
+Tab `Legistar watch-list`: the US councils whose agendas the official sources workflow searches
+(see below).
 
 The sheet must stay readable by anyone with the link, because the map reads it from visitors'
 browsers. It only needs **Viewer** access: with Editor access, anyone with the link can change
@@ -136,6 +155,75 @@ cd moratorium-tracker/n8n && python3 build_workflow.py data-centre-moratorium-tr
 
 Re-import the file in n8n afterwards; credentials have to be reconnected on import.
 
+## Official sources workflow
+
+Runs every 2 days at 09:00 Madrid time, two hours after the news workflow so they don't compete
+for Gemini quota. It searches:
+
+| Source | Covers | Key |
+|---|---|---|
+| Legistar web API | Agendas of the US councils marked `active = yes` on the `Legistar watch-list` tab | none |
+| GovInfo + Congress.gov | US federal bills, and each bill's latest action | free api.data.gov key (one key for both) |
+| Open States | US state bills | free Open States key |
+
+Records are sent to Gemini only if they mention data centres **and** a pause word (both patterns
+are in the Config node), so contracts like "Airport Data Center Upgrade" are never classified.
+Each confirmed action then either:
+- **verifies the matching row**: same country, same place (for bills, the same bill number or
+  at least two distinctive title words), same action type, dates within 120 days. The workflow
+  sets `verified = yes`, `verified_by = official`, `official_source_url` and `stage`, and changes
+  no other column;
+- **adds a new row**, already verified, when nothing matches;
+- or is **listed in the run report** when it matches more than one row, without changing any.
+
+Rows with `verified_by = person` are never changed. An email after each run lists every source's
+counts, the rows added and verified, ambiguous matches, and watch-list places that returned errors.
+
+### Set it up in n8n
+
+1. Get the keys: api.data.gov (api.data.gov/signup) and Open States (openstates.org, account
+   page after signing up).
+2. Import `n8n/data-centre-moratorium-official-sources.n8n.json`.
+3. **GovInfo search** and **Congress.gov bills**: one *Query Auth* credential, Name `api_key`,
+   Value the api.data.gov key.
+4. **Open States search**: a *Header Auth* credential, Name `X-API-KEY`, Value the Open States key.
+5. **Classify with Gemini** and **Classify again**: the news workflow's Gemini credential.
+6. The six Google Sheets nodes: your Google account. **Email report**: Gmail.
+7. **Config**: replace `CHANGE-ME@example.com` with the report address.
+8. First run: set `fromDate` / `toDate` to one past week and run by hand; check each added or
+   verified row against its link. Then clear the dates and switch the workflow to **Active**.
+
+### The Legistar watch-list
+
+Columns: `jurisdiction` (written exactly as in the `Moratoriums` tab, e.g. `Charlotte, NC`),
+`country`, `legistar_client`, `active`, `last_error` (written by the workflow), `notes`.
+Only rows with `active = yes` are searched. `check` means a person still has to confirm the client
+name belongs to that place (several US places share names).
+
+**To add a place:** find the council's Legistar site, usually `https://<client>.legistar.com`
+(for Charlotte: `charlottenc.legistar.com`). The part before `.legistar.com` is the client name.
+Check that `https://webapi.legistar.com/v1/<client>/bodies` returns a list rather than an error,
+then add the row with `active = yes`. Many councils don't use Legistar, so their rows stay
+`active = no`; they are still covered by the news workflow.
+
+### Catch-up runs
+
+As with the news workflow: keep the workflow inactive, set `fromDate` and `toDate` in Config,
+run by hand, then clear both dates. If the report says records were not checked because
+`maxItemsPerRun` was reached, rerun that range as two shorter ones.
+
+### Changing it and testing
+
+Edit `n8n/build_official_sources.py`, rebuild and run the tests:
+
+```bash
+cd moratorium-tracker/n8n && python3 build_official_sources.py data-centre-moratorium-official-sources.n8n.json && node tests/test_official_sources.js
+```
+
+The tests run the workflow's code with recorded Legistar, GovInfo and Congress.gov responses
+(the Open States response is hand-written in its documented format) and check filtering,
+matching, verification, retries and the report.
+
 ## History and decisions
 
 - **11 Oct 2026:** map built. It was first a pasted HTML block, which failed because the blog
@@ -146,10 +234,18 @@ Re-import the file in n8n afterwards; credentials have to be reconnected on impo
 - **6 Nov 2026:** new n8n account. Duplicate check against the sheet added. Claude was
   swapped for Gemini.
 - **12 Nov 2026:** map work fully removed from `fost-rego`. The project moved into this folder.
+- **14–16 Nov 2026:** catch-up from 23 Oct in date-range batches (free Gemini quota allowed
+  roughly three batches a day); about 170 rows added. Runs moved to every 2 days, searching 72 hours.
+- **21 Nov 2026:** map shows one world with a light-blue sea.
+- **22 Nov 2026:** official sources workflow added (OpenSpec change
+  `add-moratorium-official-sources`): verification columns, Legistar watch-list, automatic
+  verification by official records.
 
 ## Open items
 
-- The Gemini workflow has not yet run against the real Gemini API.
-- No rows have been added since 23 Oct 2026 (including the 8 Nov 2026 US ballot results).
-  Catch-up planned in three batches: 23–29 Oct, 30 Oct–5 Nov, 6 Nov–now.
-- Sheet link sharing should be **Viewer**, not Editor.
+- The official sources workflow has been tested only in simulation. Its first by-hand run in n8n
+  should confirm that the **Verify rows** step updates rows by `row_number` as expected.
+- Four watch-list places are marked `check` (Appleton, Fulton County, Mooresville, San Marcos):
+  confirm their client names belong to the right state, then set `active = yes`.
+- Roundup rows such as "United States / United States" and duplicate rows (Australia, Fairfield)
+  from the catch-up still need tidying by hand.
