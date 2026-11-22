@@ -399,4 +399,6 @@ connections["Build digest"] = {"main": [[{"node": "Email digest", "type": "main"
 wf = {"name": "Data centre moratorium tracker (Gemini)", "nodes": nodes, "connections": connections,
       "active": False, "settings": {"executionOrder": "v1", "timezone": "Europe/Madrid"}, "pinData": {}, "meta": {}}
 
-json.dump(wf, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+# Only write the file when run directly, so other build scripts can import the shared pieces above.
+if __name__ == "__main__":
+    json.dump(wf, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False, indent=2)

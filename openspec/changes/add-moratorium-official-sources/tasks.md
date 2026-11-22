@@ -2,10 +2,10 @@
 
 ## 1. Shared code and sheet setup
 
-- [ ] 1.1 Guard the file-writing code in `moratorium-tracker/n8n/build_workflow.py` with `if __name__ == "__main__"`. Verify that rebuilding the news workflow gives a JSON file identical to the committed one apart from node IDs (compare nodes, parameters and connections).
-- [ ] 1.2 Add `official_source_url`, `verified_by` and `stage` columns to the end of the `Moratoriums` tab. Verify by reading the header row through the Sheets connector, and confirm the live map still loads all rows.
-- [ ] 1.3 Create the `Legistar watch-list` tab with columns `jurisdiction`, `country`, `legistar_client`, `active`, `last_error` and `notes`. Verify the header row through the Sheets connector.
-- [ ] 1.4 Seed the watch-list. For each US city and county in the sheet, try likely Legistar client names against `webapi.legistar.com/v1/{client}/matters?$top=1`, and add the working ones with `active = yes`. Verify Charlotte (`charlottenc`) is present, and record in `notes` the places that have no working client name.
+- [x] 1.1 Guard the file-writing code in `moratorium-tracker/n8n/build_workflow.py` with `if __name__ == "__main__"`. Verify that rebuilding the news workflow gives a JSON file identical to the committed one apart from node IDs (compare nodes, parameters and connections).
+- [x] 1.2 Add `official_source_url`, `verified_by` and `stage` columns to the end of the `Moratoriums` tab. Verify by reading the header row through the Sheets connector, and confirm the live map still loads all rows.
+- [x] 1.3 Create the `Legistar watch-list` tab with columns `jurisdiction`, `country`, `legistar_client`, `active`, `last_error` and `notes`. Verify the header row through the Sheets connector.
+- [x] 1.4 Seed the watch-list. For each US city and county in the sheet, try likely Legistar client names against `webapi.legistar.com/v1/{client}/matters?$top=1`, and add the working ones with `active = yes`. Verify Charlotte (`charlottenc`) is present, and record in `notes` the places that have no working client name.
 
 ## 2. Official source search
 
